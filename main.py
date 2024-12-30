@@ -10,7 +10,7 @@ import geopandas as gp
 
 import gtfs_kit as gk
 
-from flask import Flask, abort
+from flask import Flask, abort, jsonify
 
 app = Flask(__name__)
 
@@ -65,9 +65,11 @@ class Route():
 
         upcoming_departures = route_departures[route_departures["departure_time"] > datetime.now().time()]
 
-        next_departure = upcoming_departures.iloc[0]
-
-        return Trip(self.feed, next_departure.trip_id)
+        if(len(upcoming_departures) > 0):
+            next_departure = upcoming_departures.iloc[0]
+            return Trip(self.feed, next_departure.trip_id)
+        else:
+            return None
 
     def get_trips_today(self):
         date = datetime.now().strftime("%Y%m%d")
@@ -100,9 +102,6 @@ class Route():
             daily_summary['next_trip'] = None
 
         return daily_summary
-        
-    def get_route_status_json(self):
-        return json.dumps(self.get_route_status())
     
 class Trip():
     def __init__(self, feed, trip_id):
@@ -157,9 +156,6 @@ class Trip():
 
         return trip_summary
     
-    def get_trip_summary_json(self):
-        return json.dumps(self.get_trip_summary())
-    
     def __repr__(self):
         return f"{self.trip_id}"
     
@@ -199,9 +195,6 @@ class Stop():
 
         return stop_summary
     
-    def get_stop_summary_json(self):
-        return json.dumps(self.get_stop_summary())
-    
 class StopTime():
     def __init__(self, feed, trip_id, arrival_time, departure_time, stop_sequence, stop_id):
         self.feed = feed
@@ -227,7 +220,7 @@ def all_routes():
 def route_summary(route_id):
     try:
         route = Route(feed, str(route_id))
-        return route.get_route_status_json()
+        return jsonify(route.get_route_status())
     except Exception as e:
         print(e)
         return abort(404)
@@ -236,7 +229,7 @@ def route_summary(route_id):
 def trip_summary(trip_id):
     try:
         trip = Trip(feed, str(trip_id))
-        return trip.get_trip_summary_json()
+        return jsonify(trip.get_trip_summary())
     except:
         return abort(404)
 
@@ -245,4 +238,4 @@ if __name__ == '__main__':
 
     # run() method of Flask class runs the application 
     # on the local development server.
-    app.run()
+    app.run(debug=True)
