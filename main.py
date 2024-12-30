@@ -217,10 +217,41 @@ def all_routes():
     return jsonify({"routes": feed.routes['route_id'].to_list()})
 
 @app.route("/routes/<route_id>")
-def route_summary(route_id):
+@app.route("/routes/<route_id>/today")
+def route_daily_summary(route_id):
     try:
         route = Route(feed, str(route_id))
         return jsonify(route.get_route_status())
+    except Exception as e:
+        print(e)
+        return abort(404)
+    
+@app.route("/routes/<route_id>/schedule/<date>")
+def route_schedule(route_id, date):
+    try:
+        route = Route(feed, str(route_id))
+        print(route)
+        print(route.get_trips_on_date("20241231"))
+        return jsonify([t.get_trip_summary() for t in route.get_trips_on_date(date)])
+    except Exception as e:
+        print(e)
+        return abort(404)
+    
+@app.route("/routes/<route_id>/active")
+def route_active_trip(route_id):
+    try:
+        route = Route(feed, str(route_id))
+        return jsonify(route.get_active_trip())
+    except Exception as e:
+        print(e)
+        return abort(404)
+
+
+@app.route("/routes/<route_id>/next")
+def route_next_trip(route_id):
+    try:
+        route = Route(feed, str(route_id))
+        return jsonify(route.get_next_trip())
     except Exception as e:
         print(e)
         return abort(404)
