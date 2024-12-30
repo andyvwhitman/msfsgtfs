@@ -46,13 +46,13 @@ class Route():
         current_time = current_datetime.strftime("%H:%M:%S")
 
         all_active_trips = feed.get_trips(date=current_date, time=current_time)
-        
-        try:
-            route_active_trip = all_active_trips[all_active_trips["route_id"]== self.route_id].iloc[0]
+        route_active_trips = all_active_trips[all_active_trips["route_id"]== self.route_id]
+
+        if(len(route_active_trips) > 0):
+            route_active_trip = route_active_trips.iloc[0]
             return Trip(self.feed, route_active_trip.trip_id)
         
-        except:
-            route_active_trip = None
+        else:
             return None
 
     def get_next_trip(self):
@@ -214,7 +214,7 @@ def index():
 
 @app.route("/routes")
 def all_routes():
-    return json.dumps({"routes": feed.routes['route_id'].to_list()})
+    return jsonify({"routes": feed.routes['route_id'].to_list()})
 
 @app.route("/routes/<route_id>")
 def route_summary(route_id):
@@ -224,6 +224,10 @@ def route_summary(route_id):
     except Exception as e:
         print(e)
         return abort(404)
+
+@app.route("/trips")
+def all_trips():
+    return jsonify({"trips": feed.trips['trip_id'].to_list()})
 
 @app.route("/trips/<trip_id>")
 def trip_summary(trip_id):
