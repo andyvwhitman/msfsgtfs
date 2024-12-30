@@ -11,8 +11,10 @@ import geopandas as gp
 import gtfs_kit as gk
 
 from flask import Flask, abort, jsonify
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app) # Enables 'Cross-Origin Resource Sharing'
 
 feed_path = "Archive.zip"
 feed = gk.read_feed(feed_path, dist_units='mi')
