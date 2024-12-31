@@ -1,25 +1,164 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8" />
-    <title>Swan's Island Ferry</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="" />
-    <link rel="stylesheet" href="./styles.css" />
-    <script src = "script.js"></script>
-</head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ferry Schedule</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 16px;
+            background: #f5f5f5;
+        }
 
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: #003B5C;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        .header h2 {
+            font-size: 22px;
+            margin: 8px 0;
+        }
+
+        .current-ferry {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .time {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .route {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .location {
+            padding: 8px 16px;
+            border-radius: 6px;
+        }
+
+        .location.from {
+            background: #E74C3C;
+            color: white;
+        }
+
+        .location.to {
+            background: #003B5C;
+            color: white;
+        }
+
+        .arrow {
+            color: #666;
+            font-size: 20px;
+        }
+
+        .departure-status {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .departure-status span {
+            color: #27AE60;
+        }
+
+        .schedule {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .schedule-header {
+            text-align: center;
+            padding: 15px;
+            font-weight: bold;
+            border-bottom: 1px solid #eee;
+        }
+
+        .schedule-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .schedule-cell {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+        }
+
+        .schedule-cell:nth-child(odd) {
+            border-right: 1px solid #eee;
+        }
+
+        .schedule-cell:last-child,
+        .schedule-cell:nth-last-child(2) {
+            border-bottom: none;
+        }
+    </style>
+</head>
 <body>
-    <div class=header>
-        HEADER
-    </div>
-    <div class=current-trip>
-        CURRENT TRIP INFO
-    </div>
-    <div class='schedule-container'>
-        SCHEDULE
+    <div class="container">
+        <div class="header">
+            <h1>Ferry Schedule</h1>
+            <h2>Dec. 23rd</h2>
+        </div>
+
+        <div class="current-ferry">
+            <div class="time">9:45 am</div>
+            <div class="route">
+                <div class="location from">Swan's Island</div>
+                <div class="arrow">→</div>
+                <div class="location to">Bass Harbor</div>
+            </div>
+            <div class="departure-status">
+                Departing in: <span>4 min.</span>
+            </div>
+        </div>
+
+        <div class="schedule">
+            <div class="schedule-header">Departing:</div>
+            <div class="schedule-grid">
+                <div class="schedule-cell">Swan's Island</div>
+                <div class="schedule-cell">Bass Harbor</div>
+                <div class="schedule-cell">6:45 am</div>
+                <div class="schedule-cell">7:30 am</div>
+                <div class="schedule-cell">8:15 am</div>
+                <div class="schedule-cell">9:00 am</div>
+                <div class="schedule-cell">9:45 am</div>
+                <div class="schedule-cell">11:00 am</div>
+                <div class="schedule-cell">12:45 pm</div>
+                <div class="schedule-cell">1:30 pm</div>
+                <div class="schedule-cell">2:15 pm</div>
+                <div class="schedule-cell">3:00 pm</div>
+                <div class="schedule-cell">3:45 pm</div>
+                <div class="schedule-cell">4:30 pm</div>
+            </div>
+        </div>
     </div>
 </body>
-
 </html>
