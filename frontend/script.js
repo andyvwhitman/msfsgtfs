@@ -16,7 +16,7 @@ function convertTime(timeStr) {
 // Listen for the DOM to finish loading?
 document.addEventListener('DOMContentLoaded', () => {
     // Get all the data from the api
-    fetch('http://127.0.0.1:5000/trips/1501')
+    fetch('http://127.0.0.1:5000/trips/1101')
         .then(response => response.json())
         .then(data => {
             console.log(data)
@@ -31,9 +31,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
             // Inject data from local schema to appropriate html objects
-            let currentTripContainer = document.getElementById('current-trip-container');
-            currentTripContainer.innerHTML = `<pre>${JSON.stringify(tripInfo, null, 4)}</pre>`;
-            console.log(currentTripContainer)
+
+            // CURRENT FERRY
+
+                // DEPARTURE TIME 
+                document.getElementById('current-time').innerHTML = tripInfo.time_start;
+                document.getElementById('location-from').innerHTML = tripInfo.origin;
+                document.getElementById('location-to').innerHTML = tripInfo.destination;
+                
+                
         })
         // Handle errors
         .catch(error => {
