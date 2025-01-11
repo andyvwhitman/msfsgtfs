@@ -62,11 +62,11 @@ class Route():
 
     def get_next_trip(self):
         date = datetime.now().strftime("%Y%m%d")
-        time = datetime.now().strftime("%H:%M:%D")
+        time = datetime.now().strftime("%H:%M:%S")
 
         route_timetable = self.feed.build_route_timetable(self.route_id, [date])
         route_departures = route_timetable[route_timetable["stop_sequence"] == 1]
-        route_departures.loc[:, 'departure_time'] = pd.to_datetime(route_departures['departure_time'], format='%H:%M:%S').dt.time
+        route_departures.loc[:, 'departure_time'] = pd.to_datetime(route_departures.loc[:,'departure_time'], format='%H:%M:%S').dt.time
 
         upcoming_departures = route_departures[route_departures["departure_time"] > datetime.now().time()]
 
@@ -286,4 +286,4 @@ def trip_summary(trip_id):
 
 # main driver function
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)
