@@ -14,6 +14,8 @@ from flask import Flask, abort, jsonify
 from flask_cors import CORS
 
 app = Flask(__name__)
+app.config.from_pyfile('config.py')
+
 CORS(app) # Enables 'Cross-Origin Resource Sharing'
 
 feed_path = "Archive.zip"
@@ -284,7 +286,4 @@ def trip_summary(trip_id):
 
 # main driver function
 if __name__ == '__main__':
-
-    # run() method of Flask class runs the application 
-    # on the local development server.
-    app.run(debug=True)
+    app.run()
