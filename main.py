@@ -47,6 +47,7 @@ class Route():
         current_date = current_datetime.strftime("%Y%m%d")
         current_time = current_datetime.strftime("%H:%M:%S")
 
+
         all_active_trips = feed.get_trips(date=current_date, time=current_time)
         route_active_trips = all_active_trips[all_active_trips["route_id"]== self.route_id]
 
@@ -243,7 +244,13 @@ def route_schedule(route_id, date):
 def route_active_trip(route_id):
     try:
         route = Route(feed, str(route_id))
-        return jsonify(route.get_active_trip())
+        trip = route.get_active_trip()
+
+        if trip:
+            return jsonify(trip.get_trip_summary())
+        else:
+            return {}
+    
     except Exception as e:
         print(e)
         return abort(404)
@@ -253,7 +260,12 @@ def route_active_trip(route_id):
 def route_next_trip(route_id):
     try:
         route = Route(feed, str(route_id))
-        return jsonify(route.get_next_trip())
+        trip = route.get_next_trip()
+
+        if trip:
+            return jsonify(trip.get_trip_summary())
+        else:
+            return {}
     except Exception as e:
         print(e)
         return abort(404)
