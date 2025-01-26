@@ -1,6 +1,6 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import "./components/schedule.tsx";
+import { ScheduleGrid } from "./components/schedule.tsx";
 
 createRoot(document.getElementById("schedule")!).render(
   <StrictMode>
