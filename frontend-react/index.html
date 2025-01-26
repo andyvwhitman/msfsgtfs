@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Ferry Schedule</title>
+        <script type="module" src="/src/main.tsx"></script>
+    </head>
+    <body>
+        <div id="container">
+            <div id="header">
+                <h1 id="header-title">Ferry Schedule</h1>
+                <h2 id="header-date">TODAY'S DATE</h2>
+            </div>
+
+            <div id="current-ferry">
+                <div id="current-time"></div>
+                <div id="route">
+                    <div id="location-from">Swan's Island</div>
+                    <div id="arrow">→</div>
+                    <div id="location-to">Bass Harbor</div>
+                </div>
+                <div id="departure-status">
+                    Departing in: <span id="departure-time">X min.</span>
+                </div>
+            </div>
+
+            <div id="schedule">
+                <div id="schedule-grid"></div>
+            </div>
+        </div>
+    </body>
+</html>
