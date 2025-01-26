@@ -96,16 +96,6 @@ class Route():
         else:
             daily_trips['all_trips'] = []
 
-        if(self.get_active_trip() != None):
-            daily_summary['active_trip'] = self.get_active_trip().get_trip_summary()
-        else:
-            daily_summary['active_trip'] = None
-
-        if(self.get_next_trip() != None):
-            daily_summary['next_trip'] = self.get_next_trip().get_trip_summary()
-        else:
-            daily_summary['next_trip'] = None
-
         return daily_summary
     
 class Trip():
