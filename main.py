@@ -30,7 +30,7 @@ class Route():
             route = self.feed.routes[self.feed.routes['route_id'] == self.route_id].iloc[0]
         except:
             raise KeyError("Route not found")
-        
+
         self.route_type = route.route_type
         self.agency_id = route.agency_id
         self.route_short_name = route.route_short_name
@@ -56,7 +56,7 @@ class Route():
         if(len(route_active_trips) > 0):
             route_active_trip = route_active_trips.iloc[0]
             return Trip(self.feed, route_active_trip.trip_id)
-        
+
         else:
             return None
 
@@ -88,7 +88,7 @@ class Route():
 
     def get_route_status(self):
         daily_summary = {}
-        
+
         daily_trips = self.get_trips_today()
 
         if(len(daily_trips) > 0):
@@ -97,7 +97,7 @@ class Route():
             daily_trips['all_trips'] = []
 
         return daily_summary
-    
+
 class Trip():
     def __init__(self, feed, trip_id):
         self.feed = feed
@@ -120,23 +120,23 @@ class Trip():
 
         stop_times = self.feed.stop_times[self.feed.stop_times['trip_id'] == self.trip_id]
         self.stop_times =  [StopTime(self.feed, t.trip_id, t.arrival_time, t.departure_time, t.stop_sequence, t.stop_id) for t in stop_times.itertuples()]
-    
+
     @property
     def originating_stop(self):
         return Stop(self.feed, self.stop_times[0].stop_id)
-    
+
     @property
     def destination_stop(self):
         return Stop(self.feed, self.stop_times[-1].stop_id)
-    
+
     @property
     def departure_time(self):
         return self.stop_times[0].departure_time
-    
+
     @property
     def arrival_time(self):
         return self.stop_times[-1].arrival_time
-    
+
     def get_trip_summary(self):
         trip_summary = {}
 
@@ -150,20 +150,20 @@ class Trip():
         trip_summary['arrival_time'] = self.arrival_time
 
         return trip_summary
-    
+
     def __repr__(self):
         return f"{self.trip_id}"
-    
+
 class Stop():
     def __init__(self, feed, stop_id):
         self.feed = feed
         self.stop_id = stop_id
-        
+
         try:
             stop = self.feed.stops[self.feed.stops['stop_id'] == self.stop_id].iloc[0]
         except:
             raise KeyError("Stop not found")
-        
+
         self.stop_code = stop.stop_code
         self.stop_name = stop.stop_name
         self.tts_stop_name = stop.tts_stop_name
@@ -189,7 +189,7 @@ class Stop():
         stop_summary['stop_lon'] = self.stop_lon
 
         return stop_summary
-    
+
 class StopTime():
     def __init__(self, feed, trip_id, arrival_time, departure_time, stop_sequence, stop_id):
         self.feed = feed
@@ -201,9 +201,9 @@ class StopTime():
 
     def __repr__(self):
         return f"Departing {self.stop_id} at {self.departure_time}"
-    
 
-@app.route("/")
+
+@app.route("/") #TODO » Clickable route navigation with hyperlinks.
 def index():
     return "<h1>Hello There</h1>"
 
@@ -220,7 +220,7 @@ def route_daily_summary(route_id):
     except Exception as e:
         print(e)
         return abort(404)
-    
+
 @app.route("/routes/<route_id>/schedule/<date>")
 def route_schedule(route_id, date):
     try:
@@ -231,7 +231,7 @@ def route_schedule(route_id, date):
     except Exception as e:
         print(e)
         return abort(404)
-    
+
 @app.route("/routes/<route_id>/active")
 def route_active_trip(route_id):
     try:
@@ -242,7 +242,7 @@ def route_active_trip(route_id):
             return jsonify(trip.get_trip_summary())
         else:
             return {}
-    
+
     except Exception as e:
         print(e)
         return abort(404)
@@ -274,6 +274,4 @@ def trip_summary(trip_id):
     except:
         return abort(404)
 
-# main driver function
-if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=8000)
