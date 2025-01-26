@@ -97,6 +97,16 @@ body {
     grid-template-columns: 1fr 1fr;
 }
 
+.left-column {
+    display: grid;
+    grid-column: 1;
+}
+
+.right-column {
+    display: grid;
+    grid-column: 2;
+}
+
 /* Since we can't use classes for repeating elements, 
    we'll style them using attribute selectors */
 [data-cell] {

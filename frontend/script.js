@@ -13,38 +13,69 @@ function convertTime(timeStr) {
     return `${hourStr}:${minutes} ${period}`;
 }
 
-// Listen for the DOM to finish loading?
-document.addEventListener('DOMContentLoaded', () => {
-    // Get all the data from the api
-    fetch('http://127.0.0.1:5000/trips/1101')
-        .then(response => response.json())
-        .then(data => {
-            console.log(data)
+async function getTodaysTrips() {
+    const response = await fetch('http://127.0.0.1:5000/routes/1000');
+    const todaysTrips = await response.json();
+    return todaysTrips;
+}
 
-            // Parse data into a sensible schema
-            let tripInfo = {
-                time_start: convertTime(data.departure_time),
-                time_end: convertTime(data.arrival_time),
-                origin: data.originating_stop.stop_name,
-                destination: data.destination_stop.stop_name
-            }
+function sortTripsByOrigin(trips, origin_id) {
+    let tripsFromPort = []
 
-
-            // Inject data from local schema to appropriate html objects
-
-            // CURRENT FERRY
-
-                // DEPARTURE TIME 
-                document.getElementById('current-time').innerHTML = tripInfo.time_start;
-                document.getElementById('location-from').innerHTML = tripInfo.origin;
-                document.getElementById('location-to').innerHTML = tripInfo.destination;
-                
-                
-        })
-        // Handle errors
-        .catch(error => {
-            console.error('Error', error);
-        })
+    for (let i = 0; i < trips.length; i++) {
+        // For every trip in the array of trips
+        let portOfOrigin = trips[i].originating_stop.stop_id
+        // If from Swan's Island -> add to tripsFromSwansIsland
+        if (portOfOrigin == origin_id) {
+            tripsFromPort.push(trips[i])
+        }
+    }
+    return tripsFromPort;
+}
 
 
-});
+// Listen for the DOM to finish loading.
+document.addEventListener('DOMContentLoaded', async () => {
+    // Load today's date
+    const currentDate = new Date();
+    document.getElementById('header-date').textContent = currentDate.toLocaleDateString();
+
+    // Fetch all trips for the day.
+    let data = await getTodaysTrips();
+    let active_trip = data.active_trip;
+    let next_trip = data.next_trip;
+    let all_trips = data.all_trips;
+
+    // Trips separated by Swan's Island / Bass Harbor.
+    let tripsFromSwansIsland = sortTripsByOrigin(all_trips, '1001');
+    let tripsFromBassHarbor = sortTripsByOrigin(all_trips, '1002');
+    
+    const dataContainer = document.createElement('div');
+
+    // Render trips from SWAN'S ISLAND in the LEFT COLUMN
+    tripsFromSwansIsland.forEach(trip => {
+        const tripDiv = document.createElement('div');
+        tripDiv.className = 'left-column'
+        tripDiv.textContent = `${convertTime(trip.departure_time)}`;
+        tripDiv.setAttribute('data-cell', '');
+        dataContainer.appendChild(tripDiv);
+    })
+    
+    // Render trips from BASS HARBOR in the RIGHT COLUMN
+    tripsFromBassHarbor.forEach(trip => {
+        const tripDiv2 = document.createElement('div');
+        tripDiv2.className = 'right-column'
+        tripDiv2.textContent = `${convertTime(trip.departure_time)}`;
+        tripDiv2.setAttribute('data-cell', '');
+        dataContainer.appendChild(tripDiv2);
+    })
+
+    
+    document.getElementById('schedule-grid').appendChild(dataContainer);
+
+
+}); 
+
+
+
+// Render the active trip in the card at the top.
