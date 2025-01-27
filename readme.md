@@ -1,6 +1,13 @@
-# Maine State Ferry Service —  General Transit Feed Specification
+# MSFS-GTFS
 
-A website for viewing MSFS schedules using the standard GTFS data format.
+A website for viewing Maine State Ferry Service schedules using the standard General Transit Feed Specification data format.
+
+Routes currently supported:
+Bass Harbor <=> Swan's Island
+
+
+
+---
 
 ### BACKEND - API
 Python + Flask
@@ -13,8 +20,6 @@ Installation
 Running Debug
 1. Activate virtual environment: ```source ./venv/bin/activate```
 2. Run application: ```python main.py```
-
----
 
 ### FRONTEND - Webpage
 HTML/CSS + React
