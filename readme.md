@@ -16,3 +16,6 @@ Running Debug
 ---
 
 ## FRONTEND
+
+1. Install requirements: ```npm install```
+2. Run dev-server ```npx vite```
