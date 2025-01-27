@@ -1,7 +1,9 @@
 // IMPORTS
 import { useState, useEffect } from "react";
-import { Trip, getTodaysTrips, sortTripsByOrigin } from "./scripts/trips.ts";
+import { } from "./scripts/trips.ts";
 
 export const ScheduleGrid = () => {
-  return <p>Paragraph</p>;
+  return (
+
+  )
 };
