@@ -16,7 +16,8 @@ export interface Trip {
 export async function getTodaysTrips(): Promise<Trip[]> {
   const response = await fetch("http://127.0.0.1:8000/routes/1000");
   const todaysTrips = await response.json();
-  return todaysTrips;
+  console.log(todaysTrips);
+  return todaysTrips.all_trips;
 }
 
 /**
