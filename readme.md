@@ -3,7 +3,7 @@
 A website for viewing Maine State Ferry Service schedules using the standard General Transit Feed Specification data format.
 
 Routes currently supported:
-Bass Harbor <=> Swan's Island
+- Bass Harbor <=> Swan's Island
 
 
 
