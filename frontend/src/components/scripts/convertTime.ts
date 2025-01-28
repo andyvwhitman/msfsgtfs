@@ -12,7 +12,7 @@ export default function convertTime(timeStr: string): string {
   parsedHours = parsedHours % 12;
   parsedHours = parsedHours ? parsedHours : 12;
 
-  // Add space if single digit
+  // TODO - NOT WORKIGN Add space if single digit
   const hourStr = parsedHours < 10 ? ` ${parsedHours}` : parsedHours.toString();
 
   return `${hourStr}:${minutes} ${period}`;

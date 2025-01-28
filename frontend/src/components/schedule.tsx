@@ -1,11 +1,14 @@
 // IMPORTS
 import { Trip, getTodaysTrips } from "./scripts/trips";
+import convertTime from "./scripts/convertTime";
 import { useState, useEffect } from "react";
 
 // COMPONENT
 export const ScheduleGrid = () => {
   // State
   const [trips, setTrips] = useState<Trip[]>([]); // list of trips
+  const [swansIslandTrips, setSwansIslandTrips] = useState<Trip[]>([]);
+  const [bassHarborTrips, setBassHarborTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true); // loading state
   const [error, setError] = useState<string | null>(null); // error message
 
@@ -15,8 +18,21 @@ export const ScheduleGrid = () => {
       try {
         const data = await getTodaysTrips(); // Fetch trips from the API
         const trips = data.all_trips;
-        console.log(trips);
+        console.log("all_trips", trips);
+        // Separate trips from Swan's Island and trips from bass Harbor.
+        const swansIslandTrips = trips.filter(
+          (trip) => trip.originating_stop.stop_id === "1001",
+        );
+        const bassHarborTrips = trips.filter(
+          (trip) => trip.originating_stop.stop_id === "1002",
+        );
+        console.log("swansIslandTrips: ", swansIslandTrips);
+        console.log("bassHarborTrips: ", bassHarborTrips);
+
+        // Set state
         setTrips(trips); // Update the trips state
+        setSwansIslandTrips(swansIslandTrips);
+        setBassHarborTrips(bassHarborTrips);
         setError(null); // Clear previous errors
       } catch (err) {
         setError("Failed to load schedule."); // Set error message
@@ -25,8 +41,6 @@ export const ScheduleGrid = () => {
       }
     };
     fetchTrips();
-
-    // Separate trips from Swan's Island and trips from bass Harbor.
   }, []); // Empty dependency array » runs only once
 
   // Handle loading and error states
@@ -40,14 +54,14 @@ export const ScheduleGrid = () => {
 
   // Main Render
   return (
-    <div>
-      <h1>Today's Ferry Schedule</h1>
+    <div id="schedule">
       <h3>Swan's Island</h3>
+      {swansIslandTrips.map((trip) => (
+        <p>{convertTime(trip.departure_time)}</p>
+      ))}
       <h3>Bass Harbor</h3>
-      {trips.map((trip) => (
-        <>
-          <p>{trip.departure_time}</p>
-        </>
+      {bassHarborTrips.map((trip) => (
+        <p>{convertTime(trip.departure_time)}</p>
       ))}
     </div>
   );
