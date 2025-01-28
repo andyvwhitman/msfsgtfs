@@ -5,6 +5,6 @@ import { Test } from "./components/test.tsx";
 
 createRoot(document.getElementById("schedule")!).render(
   <StrictMode>
-    <Test />
+    <ScheduleGrid />
   </StrictMode>,
 );
