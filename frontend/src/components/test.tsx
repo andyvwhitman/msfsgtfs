@@ -1,19 +1,15 @@
-import { getTodaysTrips } from "./scripts/trips";
+import {
+  Trip,
+  SortedTrips,
+  sortTripsByOrigin,
+  getTodaysTrips,
+} from "./scripts/trips";
 import { useEffect } from "react";
 
 export const Test = () => {
   useEffect(() => {
-    const fetchTrips = async () => {
-      try {
-        console.log("Fetching trips...");
-        const trips = await getTodaysTrips();
-        console.log(trips);
-      } catch (error) {
-        console.error("Error fetching trips:", error);
-      }
-    };
+    const sortTripsByOrigin()
 
-    fetchTrips();
   }, []);
 
   return (
