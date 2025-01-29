@@ -1,0 +1,22 @@
+#schedule {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Create two equal length columns.*/
+}
+
+#swans-island-schedule, #bass-harbor-schedule {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+}
+
+#swans-island-schedule {
+    grid-row: 1;
+    grid-column: 1;
+}
+
+#bass-harbor-schedule {
+    grid-row: 1;
+    grid-column: 2;
+}

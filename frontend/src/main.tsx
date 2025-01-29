@@ -1,6 +1,6 @@
-import { StrictMode } from "react";
+// import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { ScheduleGrid } from "./components/schedule.tsx";
+import { Schedule } from "./components/schedule.tsx";
 import { Test } from "./components/test.tsx";
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -17,6 +17,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
 createRoot(document.getElementById("schedule-container")!).render(
   // <StrictMode>
-  <ScheduleGrid />,
+  <>
+  <Schedule />
+  {/* <Test /> */}
+  </>
   // </StrictMode>,
 );

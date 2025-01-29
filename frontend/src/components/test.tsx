@@ -1,21 +1,20 @@
-import {
-  Trip,
-  SortedTrips,
-  sortTripsByOrigin,
-  getTodaysTrips,
-} from "./scripts/trips";
-import { useEffect } from "react";
+import "./styles/test.css"
 
 export const Test = () => {
-  useEffect(() => {
-    const sortTripsByOrigin()
-
-  }, []);
-
   return (
-    <>
-      <p> Test Component</p>
-      <p> Results in console » </p>
-    </>
+    <div id="container">
+      <div id="A">
+        <h1>Column A</h1>
+        <p> Data </p>
+        <p> Data </p>
+        <p> Data </p>
+      </div>
+      <div id="B">
+        <h1>Column B</h1>
+        <p> Data </p>
+        <p> Data </p>
+        <p> Data </p>
+      </div>
+    </div>
   );
 };

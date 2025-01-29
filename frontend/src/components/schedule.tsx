@@ -2,9 +2,10 @@
 import { Trip, getTodaysTrips } from "./scripts/trips";
 import convertTime from "./scripts/convertTime";
 import { useState, useEffect } from "react";
+import "./styles/schedule.css";
 
 // COMPONENT
-export const ScheduleGrid = () => {
+export const Schedule = () => {
   // State
   const [trips, setTrips] = useState<Trip[]>([]); // list of trips
   const [swansIslandTrips, setSwansIslandTrips] = useState<Trip[]>([]);
@@ -55,14 +56,18 @@ export const ScheduleGrid = () => {
   // Main Render
   return (
     <div id="schedule">
-      <h3>Swan's Island</h3>
-      {swansIslandTrips.map((trip) => (
-        <p>{convertTime(trip.departure_time)}</p>
-      ))}
-      <h3>Bass Harbor</h3>
-      {bassHarborTrips.map((trip) => (
-        <p>{convertTime(trip.departure_time)}</p>
-      ))}
+      <div id="swans-island-schedule">
+        <h3>Swan's Island</h3>
+        {swansIslandTrips.map((trip) => (
+          <p>{convertTime(trip.departure_time)}</p>
+        ))}
+      </div>
+      <div id="bass-harbor-schedule">
+        <h3>Bass Harbor</h3>
+        {bassHarborTrips.map((trip) => (
+          <p>{convertTime(trip.departure_time)}</p>
+        ))}
+      </div>
     </div>
   );
 };
