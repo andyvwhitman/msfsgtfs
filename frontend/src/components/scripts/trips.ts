@@ -26,7 +26,10 @@ export interface Trip {
  * @returns Trip[]
  */
 export async function getTodaysTrips(): Promise<Trip[]> {
+  // LOCAL API ENDPOINT
   const response = await fetch("http://127.0.0.1:8000/routes/1000/today");
+  // LIVE API ENDPOINT
+  // const response = await fetch("https://swansislandferry.com/routes/1000/today");
   if (!response.ok) throw new Error("Failed to fetch trips");
   return response.json();
 }
