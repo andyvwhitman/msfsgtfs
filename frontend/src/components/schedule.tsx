@@ -59,7 +59,10 @@ export const Schedule = () => {
       <div id="swans-island-schedule">
         <h3>Swan's Island</h3>
         {swansIslandTrips.map((trip) => (
-          <p>{convertTime(trip.departure_time)}</p>
+          // TODO — If trip.departure_time is past current time, change the style. Conditional CSS or JS?
+          <p>
+            {convertTime(trip.departure_time)}
+          </p>
         ))}
       </div>
       <div id="bass-harbor-schedule">

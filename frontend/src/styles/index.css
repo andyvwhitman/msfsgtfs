@@ -1,6 +1,139 @@
+/* Base styles and CSS reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+body {
+  background-color: #f1f1f1;
+  color: #434343;
+  min-height: 100vh;
+}
+
+/* Container styles */
+#container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+/* Header styles */
 #header {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+#header-title {
+  color: #434343;
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+#header-date {
+  color: #063F62;
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+/* Schedule component styles */
+#schedule {
+  display: flex;
+  flex-direction: column; /* Stack items vertically by default */
+  align-items: center; /* Center children horizontally */
+  justify-content: center;
+  background: #f1f1f1;
+  border-radius: 16px;
+  padding: 2rem;
+  margin: 2rem auto;
+  max-width: 900px;
+  box-shadow:
+    8px 8px 16px #d1d1d1,
+    -8px -8px 16px #ffffff;
+}
+
+#swans-island-schedule,
+#bass-harbor-schedule {
+  margin-bottom: 2rem;
+
+}
+
+#schedule h3 {
+  color: #063F62;
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  padding-bottom: 0.5rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
+#schedule p {
+  color: #434343;
+  padding: 0.75rem;
+  margin: 0.5rem 0;
+  background: #ffffff;
+  border-radius: 8px;
+  text-align: center;
+  /* Subtle inner shadow for depth */
+  box-shadow: inset 2px 2px 5px #d1d1d1;
+}
+
+/* Loading and error states */
+.error {
+  color: #C95C5C;
+  text-align: center;
+  padding: 2rem;
+  font-size: 1.2rem;
+}
+
+/* Responsive design */
+@media (min-width: 768px) {
+  #schedule {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+    padding: 3rem;
+  }
+
+  #swans-island-schedule,
+  #bass-harbor-schedule {
+    margin-bottom: 0;
+    width: 100%;
+  }
+
+  #header-title {
+    font-size: 2.5rem;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: #434343;
+    color: #f1f1f1;
+  }
+
+  #header-title {
+    color: #f1f1f1;
+  }
+
+  #header-date {
+    color: #063F62;
+  }
+
+  #schedule {
+    background: #434343;
+    box-shadow:
+      8px 8px 16px #383838,
+      -8px -8px 16px #4e4e4e;
+  }
+
+  #schedule p {
+    background: #383838;
+    color: #f1f1f1;
+    box-shadow: inset 2px 2px 5px #333333;
+  }
 }
