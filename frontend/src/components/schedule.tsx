@@ -1,6 +1,6 @@
 // IMPORTS
 import { Trip, getTodaysTrips } from "./scripts/trips";
-import convertTime from "./scripts/convertTime";
+import { convertTime, createDateFromTimeString } from "./scripts/time"
 import { useState, useEffect } from "react";
 import "./styles/schedule.css";
 
@@ -60,7 +60,8 @@ export const Schedule = () => {
         <h3>Swan's Island</h3>
         {swansIslandTrips.map((trip) => (
           // TODO — If trip.departure_time is past current time, change the style. Conditional CSS or JS?
-          <p>
+          // If past set id='past'
+          <p id={new createDateFromTimeString(trip.departure_time) < new Date() ? "past" : "future"}>
             {convertTime(trip.departure_time)}
           </p>
         ))}
@@ -68,7 +69,9 @@ export const Schedule = () => {
       <div id="bass-harbor-schedule">
         <h3>Bass Harbor</h3>
         {bassHarborTrips.map((trip) => (
-          <p>{convertTime(trip.departure_time)}</p>
+          <p id={new createDateFromTimeString(trip.departure_time) < new Date() ? "past" : "future"}>
+            {convertTime(trip.departure_time)}
+          </p>
         ))}
       </div>
     </div>

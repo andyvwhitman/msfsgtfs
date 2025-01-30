@@ -89,6 +89,11 @@ body {
   font-size: 1.2rem;
 }
 
+p#past {
+    text-decoration: line-through;
+    color: #C95C5C;
+}
+
 /* Responsive design */
 @media (min-width: 768px) {
   #schedule {
