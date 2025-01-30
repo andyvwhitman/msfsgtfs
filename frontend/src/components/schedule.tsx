@@ -1,10 +1,11 @@
 // IMPORTS
 import { Trip, getTodaysTrips } from "./scripts/trips";
-import convertTime from "./scripts/convertTime";
+import { convertTime, createDateFromTimeString } from "./scripts/time"
 import { useState, useEffect } from "react";
+import "./styles/schedule.css";
 
 // COMPONENT
-export const ScheduleGrid = () => {
+export const Schedule = () => {
   // State
   const [trips, setTrips] = useState<Trip[]>([]); // list of trips
   const [swansIslandTrips, setSwansIslandTrips] = useState<Trip[]>([]);
@@ -55,14 +56,24 @@ export const ScheduleGrid = () => {
   // Main Render
   return (
     <div id="schedule">
-      <h3>Swan's Island</h3>
-      {swansIslandTrips.map((trip) => (
-        <p>{convertTime(trip.departure_time)}</p>
-      ))}
-      <h3>Bass Harbor</h3>
-      {bassHarborTrips.map((trip) => (
-        <p>{convertTime(trip.departure_time)}</p>
-      ))}
+      <div id="swans-island-schedule">
+        <h3>Swan's Island</h3>
+        {swansIslandTrips.map((trip) => (
+          // TODO — If trip.departure_time is past current time, change the style. Conditional CSS or JS?
+          // If past set id='past'
+          <p id={new createDateFromTimeString(trip.departure_time) < new Date() ? "past" : "future"}>
+            {convertTime(trip.departure_time)}
+          </p>
+        ))}
+      </div>
+      <div id="bass-harbor-schedule">
+        <h3>Bass Harbor</h3>
+        {bassHarborTrips.map((trip) => (
+          <p id={new createDateFromTimeString(trip.departure_time) < new Date() ? "past" : "future"}>
+            {convertTime(trip.departure_time)}
+          </p>
+        ))}
+      </div>
     </div>
   );
 };

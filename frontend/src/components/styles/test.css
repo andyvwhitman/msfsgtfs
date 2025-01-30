@@ -1,0 +1,19 @@
+#container {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Create two equal length columns.*/
+    border: 1px solid black;
+}
+
+#A, #B {
+    border: 2px solid red;
+}
+
+#A {
+    grid-column: 1; /* Place this item in the first column */
+    grid-row: 1;
+}
+
+#B {
+    grid-column: 2; /* Place this item in the second column */
+    grid-row: 1;
+}

@@ -3,7 +3,7 @@
  * @param timeStr: string » (HH:mm)
  * @returns timeStr: string » (hh:mm a)
  */
-export default function convertTime(timeStr: string): string {
+export function convertTime(timeStr: string): string {
   const [hours, minutes] = timeStr.split(":");
   let parsedHours = parseInt(hours, 10);
   const period = parsedHours >= 12 ? "PM" : "AM";
@@ -12,8 +12,14 @@ export default function convertTime(timeStr: string): string {
   parsedHours = parsedHours % 12;
   parsedHours = parsedHours ? parsedHours : 12;
 
-  // TODO - NOT WORKIGN Add space if single digit
-  const hourStr = parsedHours < 10 ? ` ${parsedHours}` : parsedHours.toString();
+  // Add space if single digit
+  const hourStr = parsedHours < 10 ? `  ${parsedHours}` : parsedHours.toString();
 
   return `${hourStr}:${minutes} ${period}`;
+}
+
+export function createDateFromTimeString(timeStr: string) {
+  const [hours, minutes, seconds] = timeStr.split(":").map(Number);
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes, seconds);
 }
