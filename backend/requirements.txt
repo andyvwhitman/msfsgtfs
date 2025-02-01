@@ -8,6 +8,7 @@ Flask-Cors==5.0.0
 folium==0.19.3
 geopandas==1.0.1
 gtfs-kit==10.0.0
+gunicorn==23.0.0
 idna==3.10
 itsdangerous==2.2.0
 Jinja2==3.1.5
