@@ -14,6 +14,55 @@ body {
     padding: 2rem 1rem;
 }
 
+/* Nav */
+.site-nav {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    background: white;
+    padding: 0.9rem 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.site-nav a {
+    text-decoration: none;
+    color: #666;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.site-nav a.active {
+    color: #007aff;
+}
+
+/* Weekly schedule */
+.day-card {
+    background: white;
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.day-card h2 {
+    font-size: 0.95rem;
+    margin: 0 0 0.75rem;
+    font-weight: 700;
+}
+
+.day-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.day-col h3 {
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem;
+    color: #888;
+}
+
 header {
     text-align: center;
     margin-bottom: 2rem;

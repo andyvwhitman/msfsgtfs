@@ -5,24 +5,32 @@ A website for viewing Maine State Ferry Service schedules using the standard Gen
 Routes currently supported:
 - Bass Harbor <=> Swan's Island
 
-
+The app is a single Flask application that renders the schedule pages server-side
+(Jinja templates + HTMX for live updates).
 
 ---
 
-### BACKEND - API
-Python + Flask
+### GTFS Feed
 
-Installation
+The feed is hand-authored. The raw GTFS files live in `msfs_gtfs_package/` and are
+zipped into `backend/Archive.zip` (a generated artifact) by the build utility:
+
+```
+python build_feed.py
+```
+
+Edit any file in `msfs_gtfs_package/`, re-run `build_feed.py`, and restart the app
+to pick up the changes.
+
+---
+
+### Running
+
 1. Create virtual environment: ```virtualenv venv```
 2. Activate virtual environment: ```source ./venv/bin/activate```
-3. Install requirements: ```pip install -r requirements.txt```
+3. Install requirements: ```pip install -r backend/requirements.txt```
+4. Build the feed: ```python build_feed.py```
+5. Run the app: ```cd backend && flask run```
 
-Running Debug
-1. Activate virtual environment: ```source ./venv/bin/activate```
-2. Run application: ```python main.py```
-
-### FRONTEND - Webpage
-HTML/CSS + React
-
-1. Install requirements: ```npm install```
-2. Run dev-server: ```npx vite```
+Then open http://localhost:5000 — the landing page shows today's live schedule, and
+`/schedule` shows the full weekly schedule.

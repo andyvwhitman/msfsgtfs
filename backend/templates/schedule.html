@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Weekly Schedule{% endblock %}
+{% block content %}
+<div id="container">
+    <header>
+        <h1>Weekly Schedule</h1>
+        <p class="date">{{ stop_a_name }} &harr; {{ stop_b_name }}</p>
+    </header>
+
+    {% for day, trips in weekly_schedule.items() %}
+    <section class="day-card">
+        <h2>{{ day }}</h2>
+        {% if trips %}
+        <div class="day-grid">
+            <div class="day-col">
+                <h3>Departing {{ stop_a_name }}</h3>
+                {% for trip in trips if trip.direction_id == 1 %}
+                    <div class="trip future">{{ trip.display_time }}</div>
+                {% else %}
+                    <div class="no-more">&mdash;</div>
+                {% endfor %}
+            </div>
+            <div class="day-col">
+                <h3>Departing {{ stop_b_name }}</h3>
+                {% for trip in trips if trip.direction_id == 0 %}
+                    <div class="trip future">{{ trip.display_time }}</div>
+                {% else %}
+                    <div class="no-more">&mdash;</div>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+        <p class="no-more">No service</p>
+        {% endif %}
+    </section>
+    {% endfor %}
+</div>
+{% endblock %}

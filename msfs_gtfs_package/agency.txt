@@ -1,0 +1,2 @@
+agency_id, agency_name, agency_url, agency_timezone, agency_lang, agency_phone, agency_fare_url, agency_email
+1, Maine State Ferry Service, https://www.maine.gov/mdot/ferry/, America/New_York, en, 207-624-000, https://www.maine.gov/mdot/ferry/tickets/,

@@ -1,25 +1,18 @@
-import sys
 from pathlib import Path
-import json
 
 from datetime import datetime
 
-import pandas as pd
-import numpy as np
-import geopandas as gp
-
 import gtfs_kit as gk
 
-from flask import Flask, abort, jsonify, render_template
-from flask_cors import CORS
+from flask import Flask, render_template
 
 app = Flask(__name__)
 app.config.from_pyfile('config.py')
 
-CORS(app) # Enables 'Cross-Origin Resource Sharing'
-
-feed_path = "Archive.zip"
+feed_path = Path(__file__).parent / app.config.get('GTFS_FEED_PATH', 'Archive.zip')
 feed = gk.read_feed(feed_path, dist_units='mi')
+
+WEEKDAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
 
 class Route():
     def __init__(self, feed, route_id):
@@ -44,38 +37,6 @@ class Route():
         self.continuous_drop_off = route.continuous_drop_off
         self.network_id = route.network_id
 
-    def get_active_trip(self):
-        current_datetime = datetime.now()
-        current_date = current_datetime.strftime("%Y%m%d")
-        current_time = current_datetime.strftime("%H:%M:%S")
-
-
-        all_active_trips = feed.get_trips(date=current_date, time=current_time)
-        route_active_trips = all_active_trips[all_active_trips["route_id"]== self.route_id]
-
-        if(len(route_active_trips) > 0):
-            route_active_trip = route_active_trips.iloc[0]
-            return Trip(self.feed, route_active_trip.trip_id)
-
-        else:
-            return None
-
-    def get_next_trip(self):
-        date = datetime.now().strftime("%Y%m%d")
-        time = datetime.now().strftime("%H:%M:%S")
-
-        route_timetable = self.feed.build_route_timetable(self.route_id, [date])
-        route_departures = route_timetable[route_timetable["stop_sequence"] == 1]
-        route_departures.loc[:, 'departure_time'] = pd.to_datetime(route_departures.loc[:,'departure_time'], format='%H:%M:%S').dt.time
-
-        upcoming_departures = route_departures[route_departures["departure_time"] > datetime.now().time()]
-
-        if(len(upcoming_departures) > 0):
-            next_departure = upcoming_departures.iloc[0]
-            return Trip(self.feed, next_departure.trip_id)
-        else:
-            return None
-
     def get_trips_today(self):
         date = datetime.now().strftime("%Y%m%d")
         return self.get_trips_on_date(date)
@@ -86,17 +47,26 @@ class Route():
 
         return [Trip(self.feed, t.trip_id) for t in route_trips.itertuples()]
 
-    def get_route_status(self):
-        daily_summary = {}
+    def get_weekly_schedule(self):
+        # Build the recurring weekly pattern straight from calendar.txt weekday flags
+        # rather than date-based lookups: the feed's service window may not cover the
+        # current date, so get_trips(date=...) can return empty even though the
+        # recurring schedule is well-defined.
+        calendar = self.feed.calendar
+        schedule = {}
+        for day in WEEKDAYS:
+            service_ids = calendar[calendar[day].astype(int) == 1]['service_id'].astype(str)
+            day_trips = self.feed.trips[
+                (self.feed.trips['route_id'] == self.route_id)
+                & (self.feed.trips['service_id'].astype(str).isin(service_ids))
+            ]
+            trips = [Trip(self.feed, t.trip_id).get_trip_summary() for t in day_trips.itertuples()]
+            trips.sort(key=lambda t: t['departure_time'])
+            for trip in trips:
+                trip['display_time'] = _format_display_time(trip['departure_time'])
+            schedule[day.capitalize()] = trips
 
-        daily_trips = self.get_trips_today()
-
-        if(len(daily_trips) > 0):
-            daily_summary['all_trips'] = [t.get_trip_summary() for t in self.get_trips_today()]
-        else:
-            daily_summary['all_trips'] = []
-
-        return daily_summary
+        return schedule
 
 class Trip():
     def __init__(self, feed, trip_id):
@@ -264,72 +234,15 @@ def index():
 def schedule_fragment():
     return render_template('_schedule.html', **_build_schedule_context())
 
-@app.route("/routes")
-def all_routes():
-    return jsonify({"routes": feed.routes['route_id'].to_list()})
-
-@app.route("/routes/<route_id>")
-@app.route("/routes/<route_id>/today")
-def route_daily_summary(route_id):
-    try:
-        route = Route(feed, str(route_id))
-        return jsonify(route.get_route_status())
-    except Exception as e:
-        print(e)
-        return abort(404)
-
-@app.route("/routes/<route_id>/schedule/<date>")
-def route_schedule(route_id, date):
-    try:
-        route = Route(feed, str(route_id))
-        print(route)
-        print(route.get_trips_on_date("20241231"))
-        return jsonify([t.get_trip_summary() for t in route.get_trips_on_date(date)])
-    except Exception as e:
-        print(e)
-        return abort(404)
-
-@app.route("/routes/<route_id>/active")
-def route_active_trip(route_id):
-    try:
-        route = Route(feed, str(route_id))
-        trip = route.get_active_trip()
-
-        if trip:
-            return jsonify(trip.get_trip_summary())
-        else:
-            return {}
-
-    except Exception as e:
-        print(e)
-        return abort(404)
-
-
-@app.route("/routes/<route_id>/next")
-def route_next_trip(route_id):
-    try:
-        route = Route(feed, str(route_id))
-        trip = route.get_next_trip()
-
-        if trip:
-            return jsonify(trip.get_trip_summary())
-        else:
-            return {}
-    except Exception as e:
-        print(e)
-        return abort(404)
-
-@app.route("/trips")
-def all_trips():
-    return jsonify({"trips": feed.trips['trip_id'].to_list()})
-
-@app.route("/trips/<trip_id>")
-def trip_summary(trip_id):
-    try:
-        trip = Trip(feed, str(trip_id))
-        return jsonify(trip.get_trip_summary())
-    except:
-        return abort(404)
+@app.route("/schedule")
+def schedule():
+    route = Route(feed, app.config.get('ROUTE_ID', '1000'))
+    return render_template(
+        'schedule.html',
+        stop_a_name=app.config.get('STOP_A_NAME', "Swan's Island"),
+        stop_b_name=app.config.get('STOP_B_NAME', 'Bass Harbor'),
+        weekly_schedule=route.get_weekly_schedule(),
+    )
 
 if __name__ == '__main__':
     app.run(debug=True, port=8000)

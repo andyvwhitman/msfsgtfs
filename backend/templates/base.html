@@ -3,11 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ferry Schedule</title>
+    <title>{% block title %}Ferry Schedule{% endblock %}</title>
     <link rel="stylesheet" href="/static/style.css">
     <script src="https://unpkg.com/htmx.org@2.0.4" defer></script>
 </head>
 <body>
+    <nav class="site-nav">
+        <a href="/" {% if request.path == '/' %}class="active"{% endif %}>Home</a>
+        <a href="/schedule" {% if request.path == '/schedule' %}class="active"{% endif %}>Weekly Schedule</a>
+    </nav>
     {% block content %}{% endblock %}
 </body>
 </html>

@@ -1,0 +1,13 @@
+# OS / editor
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+venv/
+
+# Node
+node_modules/
+
+# Generated GTFS feed (build with: python build_feed.py)
+backend/Archive.zip
