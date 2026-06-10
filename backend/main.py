@@ -256,9 +256,13 @@ def _build_schedule_context():
 
     next_a = next((t for t in stop_a_trips if t['status'] == 'future'), None)
     next_b = next((t for t in stop_b_trips if t['status'] == 'future'), None)
-    for nxt in (next_a, next_b):
-        if nxt is not None:
-            nxt['is_next'] = True
+    # Highlight only THE single next departure to leave (soonest across both ports),
+    # not the next from each port. stop_*_trips hold the same dict objects as `trips`,
+    # so flagging here is reflected in the rendered columns.
+    upcoming = [t for t in trips if t['status'] == 'future']
+    if upcoming:
+        soonest = min(upcoming, key=lambda t: _gtfs_seconds(t['departure_time']))
+        soonest['is_next'] = True
 
     now_seconds = now.hour * 3600 + now.minute * 60 + now.second
     active_trips = []
