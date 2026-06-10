@@ -25,19 +25,41 @@
         </div>
     </section>
 
+    {% if active_trips %}
+    <section class="in-progress">
+        <h2>In Progress</h2>
+        {% for voyage in active_trips %}
+        <div class="voyage">
+            <div class="voyage-ports">
+                <span class="port from">{{ voyage.from_name }}</span>
+                <span class="port to">{{ voyage.to_name }}</span>
+            </div>
+            <div class="progress-track">
+                <div class="progress-fill" style="width: {{ voyage.progress_pct }}%"></div>
+                <span class="ferry-dot" style="left: {{ voyage.progress_pct }}%">&#9972;</span>
+            </div>
+            <div class="voyage-times">
+                <span>{{ voyage.dep_display }}</span>
+                <span>{{ voyage.arr_display }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    </section>
+    {% endif %}
+
     <section class="full-schedule">
         <h2>Today's Schedule</h2>
         <div class="schedule-grid">
             <div class="schedule-col">
                 <h3>{{ stop_a_name }}</h3>
                 {% for trip in stop_a_trips %}
-                    <div class="trip {{ trip.status }}">{{ trip.display_time }}</div>
+                    <div class="trip {{ trip.status }}{% if trip.is_next %} next{% endif %}">{{ trip.display_time }}</div>
                 {% endfor %}
             </div>
             <div class="schedule-col">
                 <h3>{{ stop_b_name }}</h3>
                 {% for trip in stop_b_trips %}
-                    <div class="trip {{ trip.status }}">{{ trip.display_time }}</div>
+                    <div class="trip {{ trip.status }}{% if trip.is_next %} next{% endif %}">{{ trip.display_time }}</div>
                 {% endfor %}
             </div>
         </div>

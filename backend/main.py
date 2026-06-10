@@ -187,6 +187,26 @@ def _format_display_time(t):
     h12 = h % 12 or 12
     return f"{h12}:{m:02d} {period}"
 
+def _abbreviate(name):
+    # Initials of each alphabetic word: "Swan's Island" -> "SI", "Bass Harbor" -> "BH".
+    letters = [w[0].upper() for w in name.split() if w[:1].isalpha()]
+    return ''.join(letters) or name[:2].upper()
+
+def _gtfs_seconds(t):
+    # Seconds since midnight; keeps GTFS times >= 24:00:00 intact for arithmetic.
+    h, m, s = map(int, t.split(':'))
+    return h * 3600 + m * 60 + s
+
+def _trip_progress_pct(departure_time, arrival_time, now_seconds):
+    # Guesstimate of voyage completion based on elapsed/expected duration. This is a
+    # stand-in until GPS/AIS data is wired in for a true position-based estimate.
+    dep_s = _gtfs_seconds(departure_time)
+    arr_s = _gtfs_seconds(arrival_time)
+    if arr_s <= dep_s:
+        return 100.0
+    pct = (now_seconds - dep_s) / (arr_s - dep_s) * 100
+    return max(0.0, min(100.0, pct))
+
 def _build_schedule_context():
     route_id = app.config.get('ROUTE_ID', '1000')
     stop_a_id = app.config.get('STOP_A_ID', '1001')
@@ -215,6 +235,23 @@ def _build_schedule_context():
 
     next_a = next((t for t in stop_a_trips if t['status'] == 'future'), None)
     next_b = next((t for t in stop_b_trips if t['status'] == 'future'), None)
+    for nxt in (next_a, next_b):
+        if nxt is not None:
+            nxt['is_next'] = True
+
+    now_seconds = now.hour * 3600 + now.minute * 60 + now.second
+    active_trips = []
+    for trip in trips:
+        if trip['status'] != 'active':
+            continue
+        active_trips.append({
+            'from_name': trip['originating_stop']['stop_name'],
+            'to_name': trip['destination_stop']['stop_name'],
+            'dep_display': trip['display_time'],
+            'arr_display': _format_display_time(trip['arrival_time']),
+            'progress_pct': _trip_progress_pct(
+                trip['departure_time'], trip['arrival_time'], now_seconds),
+        })
 
     return {
         'stop_a_name': app.config.get('STOP_A_NAME', "Swan's Island"),
@@ -223,6 +260,7 @@ def _build_schedule_context():
         'stop_b_trips': stop_b_trips,
         'next_a': next_a,
         'next_b': next_b,
+        'active_trips': active_trips,
         'today': datetime.now().strftime('%A, %B %-d, %Y'),
     }
 
@@ -237,10 +275,14 @@ def schedule_fragment():
 @app.route("/schedule")
 def schedule():
     route = Route(feed, app.config.get('ROUTE_ID', '1000'))
+    stop_a_name = app.config.get('STOP_A_NAME', "Swan's Island")
+    stop_b_name = app.config.get('STOP_B_NAME', 'Bass Harbor')
     return render_template(
         'schedule.html',
-        stop_a_name=app.config.get('STOP_A_NAME', "Swan's Island"),
-        stop_b_name=app.config.get('STOP_B_NAME', 'Bass Harbor'),
+        stop_a_name=stop_a_name,
+        stop_b_name=stop_b_name,
+        stop_a_abbr=_abbreviate(stop_a_name),
+        stop_b_abbr=_abbreviate(stop_b_name),
         weekly_schedule=route.get_weekly_schedule(),
     )
 
