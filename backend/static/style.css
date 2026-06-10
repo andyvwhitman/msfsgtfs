@@ -202,10 +202,11 @@ header h1 {
     color: #111;
 }
 
-/* In-progress trip — italic, distinct from the green "next" highlight */
+/* In-progress trip — blue "live now", italic, distinct from the green "next" */
 .trip.active {
     font-style: italic;
-    color: #111;
+    font-weight: 600;
+    color: #007aff;
 }
 
 /* Next trip to depart — green accent */
