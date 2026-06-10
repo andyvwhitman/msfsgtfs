@@ -194,9 +194,9 @@ def _abbreviate(name):
     return ''.join(letters) or name[:2].upper()
 
 def _current_datetime():
-    # Real wall clock, unless DEBUG and a ?now= override is supplied (dev-only tool for
-    # viewing the schedule "as if" it were another time/date).
-    if app.config.get('DEBUG'):
+    # Real wall clock, unless in DEV_MODE and a ?now= override is supplied (dev-only tool
+    # for viewing the schedule "as if" it were another time/date).
+    if app.config.get('DEV_MODE'):
         override = request.args.get('now')
         if override:
             try:
@@ -274,8 +274,8 @@ def _build_schedule_context():
                 trip['departure_time'], trip['arrival_time'], now_seconds),
         })
 
-    debug = bool(app.config.get('DEBUG'))
-    override = request.args.get('now') if debug else None
+    dev_mode = bool(app.config.get('DEV_MODE'))
+    override = request.args.get('now') if dev_mode else None
     now_qs = '?now=' + quote(override) if override else ''
 
     return {
@@ -287,7 +287,7 @@ def _build_schedule_context():
         'next_b': next_b,
         'active_trips': active_trips,
         'today': now_dt.strftime('%A, %B %-d, %Y'),
-        'debug': debug,
+        'dev_mode': dev_mode,
         'now_qs': now_qs,
         'now_input': now_dt.strftime('%Y-%m-%dT%H:%M'),
     }
@@ -315,4 +315,4 @@ def schedule():
     )
 
 if __name__ == '__main__':
-    app.run(debug=True, port=8000)
+    app.run(debug=app.config.get('DEV_MODE', False), port=8000)
