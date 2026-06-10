@@ -15,7 +15,7 @@ body {
 }
 
 #container.wide {
-    max-width: 1100px;
+    max-width: 1280px;
 }
 
 /* Nav */
@@ -53,9 +53,9 @@ body {
 
 .week-grid {
     display: grid;
-    grid-template-columns: repeat(7, minmax(120px, 1fr));
+    grid-template-columns: repeat(7, minmax(150px, 1fr));
     gap: 0.75rem;
-    min-width: 840px;
+    min-width: 1080px;
 }
 
 .day-col {
@@ -95,6 +95,7 @@ body {
     font-size: 0.85rem;
     border-bottom: none;
     padding: 0.18rem 0;
+    white-space: nowrap;
 }
 
 .trip.empty {
@@ -273,4 +274,32 @@ header h1 {
 .voyage-times {
     font-size: 0.8rem;
     color: #888;
+}
+
+/* Debug time override (dev only) */
+.debug-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: 1.5rem;
+    padding: 0.6rem 0.8rem;
+    background: #fff8e1;
+    border: 1px dashed #e0c069;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    color: #8a6d1b;
+}
+
+.debug-bar input {
+    font-size: 0.8rem;
+    margin-left: 0.35rem;
+}
+
+.debug-bar button {
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+
+.debug-bar a {
+    color: #8a6d1b;
 }

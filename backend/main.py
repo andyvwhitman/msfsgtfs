@@ -1,10 +1,11 @@
 from pathlib import Path
+from urllib.parse import quote
 
 from datetime import datetime
 
 import gtfs_kit as gk
 
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 
 app = Flask(__name__)
 app.config.from_pyfile('config.py')
@@ -192,6 +193,24 @@ def _abbreviate(name):
     letters = [w[0].upper() for w in name.split() if w[:1].isalpha()]
     return ''.join(letters) or name[:2].upper()
 
+def _current_datetime():
+    # Real wall clock, unless DEBUG and a ?now= override is supplied (dev-only tool for
+    # viewing the schedule "as if" it were another time/date).
+    if app.config.get('DEBUG'):
+        override = request.args.get('now')
+        if override:
+            try:
+                return datetime.fromisoformat(override)
+            except ValueError:
+                pass
+            try:
+                h, m, *rest = map(int, override.split(':'))
+                s = rest[0] if rest else 0
+                return datetime.now().replace(hour=h, minute=m, second=s, microsecond=0)
+            except (ValueError, TypeError):
+                pass
+    return datetime.now()
+
 def _gtfs_seconds(t):
     # Seconds since midnight; keeps GTFS times >= 24:00:00 intact for arithmetic.
     h, m, s = map(int, t.split(':'))
@@ -212,9 +231,11 @@ def _build_schedule_context():
     stop_a_id = app.config.get('STOP_A_ID', '1001')
     stop_b_id = app.config.get('STOP_B_ID', '1002')
 
+    now_dt = _current_datetime()
+    now = now_dt.time()
+
     route = Route(feed, route_id)
-    trips = [t.get_trip_summary() for t in route.get_trips_today()]
-    now = datetime.now().time()
+    trips = [t.get_trip_summary() for t in route.get_trips_on_date(now_dt.strftime('%Y%m%d'))]
 
     stop_a_trips, stop_b_trips = [], []
     for trip in trips:
@@ -253,6 +274,10 @@ def _build_schedule_context():
                 trip['departure_time'], trip['arrival_time'], now_seconds),
         })
 
+    debug = bool(app.config.get('DEBUG'))
+    override = request.args.get('now') if debug else None
+    now_qs = '?now=' + quote(override) if override else ''
+
     return {
         'stop_a_name': app.config.get('STOP_A_NAME', "Swan's Island"),
         'stop_b_name': app.config.get('STOP_B_NAME', 'Bass Harbor'),
@@ -261,7 +286,10 @@ def _build_schedule_context():
         'next_a': next_a,
         'next_b': next_b,
         'active_trips': active_trips,
-        'today': datetime.now().strftime('%A, %B %-d, %Y'),
+        'today': now_dt.strftime('%A, %B %-d, %Y'),
+        'debug': debug,
+        'now_qs': now_qs,
+        'now_input': now_dt.strftime('%Y-%m-%dT%H:%M'),
     }
 
 @app.route("/")

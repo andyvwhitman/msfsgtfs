@@ -1,5 +1,5 @@
 <div id="schedule-live"
-     hx-get="/schedule/fragment"
+     hx-get="/schedule/fragment{{ now_qs }}"
      hx-trigger="every 60s"
      hx-swap="outerHTML">
 
@@ -25,7 +25,6 @@
         </div>
     </section>
 
-    {% if active_trips %}
     <section class="in-progress">
         <h2>In Progress</h2>
         {% for voyage in active_trips %}
@@ -43,9 +42,10 @@
                 <span>{{ voyage.arr_display }}</span>
             </div>
         </div>
+        {% else %}
+        <p class="no-more">No trip in progress</p>
         {% endfor %}
     </section>
-    {% endif %}
 
     <section class="full-schedule">
         <h2>Today's Schedule</h2>
@@ -64,5 +64,15 @@
             </div>
         </div>
     </section>
+
+    {% if debug %}
+    <form class="debug-bar" method="get" action="/">
+        <label>Debug time
+            <input type="datetime-local" name="now" value="{{ now_input }}">
+        </label>
+        <button type="submit">View</button>
+        <a href="/">reset</a>
+    </form>
+    {% endif %}
 
 </div>
