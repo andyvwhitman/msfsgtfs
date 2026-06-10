@@ -1,0 +1,46 @@
+<div id="schedule-live"
+     hx-get="/schedule/fragment"
+     hx-trigger="every 60s"
+     hx-swap="outerHTML">
+
+    <section class="next-departures">
+        <h2>Next Departure</h2>
+        <div class="next-grid">
+            <div>
+                <span class="stop-name">{{ stop_a_name }}</span>
+                {% if next_a %}
+                    <span class="next-time">{{ next_a.display_time }}</span>
+                {% else %}
+                    <span class="no-more">No more trips today</span>
+                {% endif %}
+            </div>
+            <div>
+                <span class="stop-name">{{ stop_b_name }}</span>
+                {% if next_b %}
+                    <span class="next-time">{{ next_b.display_time }}</span>
+                {% else %}
+                    <span class="no-more">No more trips today</span>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+    <section class="full-schedule">
+        <h2>Today's Schedule</h2>
+        <div class="schedule-grid">
+            <div class="schedule-col">
+                <h3>{{ stop_a_name }}</h3>
+                {% for trip in stop_a_trips %}
+                    <div class="trip {{ trip.status }}">{{ trip.display_time }}</div>
+                {% endfor %}
+            </div>
+            <div class="schedule-col">
+                <h3>{{ stop_b_name }}</h3>
+                {% for trip in stop_b_trips %}
+                    <div class="trip {{ trip.status }}">{{ trip.display_time }}</div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+</div>

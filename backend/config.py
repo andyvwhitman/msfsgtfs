@@ -1,20 +1,11 @@
-from flask import Flask, Config
 import os
 
-class DevelopmentConfig(Config):
-    DEBUG = True
+DEBUG = os.getenv('MSFSGTFS_ENV', 'development') == 'development'
+SECRET_KEY = os.urandom(24)
 
-class ProductionConfig(Config):
-    DEBUG = False
-    SECRET_KEY = os.urandom(24)
-
-config_map = {
-    'development': DevelopmentConfig,
-    'production': ProductionConfig
-}
-
-app = Flask(__name__)
-env = os.getenv('MSFSGTFS_ENV', 'development')
-app.config.from_object(config_map[env])
-
-print(app.config['DEBUG'])
+GTFS_FEED_PATH = "Archive.zip"
+ROUTE_ID = "1000"
+STOP_A_ID = "1001"
+STOP_A_NAME = "Swan's Island"
+STOP_B_ID = "1002"
+STOP_B_NAME = "Bass Harbor"

@@ -10,7 +10,7 @@ import geopandas as gp
 
 import gtfs_kit as gk
 
-from flask import Flask, abort, jsonify
+from flask import Flask, abort, jsonify, render_template
 from flask_cors import CORS
 
 app = Flask(__name__)
@@ -94,7 +94,7 @@ class Route():
         if(len(daily_trips) > 0):
             daily_summary['all_trips'] = [t.get_trip_summary() for t in self.get_trips_today()]
         else:
-            daily_trips['all_trips'] = []
+            daily_summary['all_trips'] = []
 
         return daily_summary
 
@@ -203,9 +203,66 @@ class StopTime():
         return f"Departing {self.stop_id} at {self.departure_time}"
 
 
-@app.route("/") #TODO » Clickable route navigation with hyperlinks.
+def _parse_gtfs_time(t):
+    h, m, s = map(int, t.split(':'))
+    if h >= 24:
+        h -= 24
+    return datetime.now().replace(hour=h, minute=m, second=s, microsecond=0).time()
+
+def _format_display_time(t):
+    h, m, _ = map(int, t.split(':'))
+    if h >= 24:
+        h -= 24
+    period = 'AM' if h < 12 else 'PM'
+    h12 = h % 12 or 12
+    return f"{h12}:{m:02d} {period}"
+
+def _build_schedule_context():
+    route_id = app.config.get('ROUTE_ID', '1000')
+    stop_a_id = app.config.get('STOP_A_ID', '1001')
+    stop_b_id = app.config.get('STOP_B_ID', '1002')
+
+    route = Route(feed, route_id)
+    trips = [t.get_trip_summary() for t in route.get_trips_today()]
+    now = datetime.now().time()
+
+    stop_a_trips, stop_b_trips = [], []
+    for trip in trips:
+        dep = _parse_gtfs_time(trip['departure_time'])
+        arr = _parse_gtfs_time(trip['arrival_time'])
+        if arr < now:
+            trip['status'] = 'past'
+        elif dep <= now <= arr:
+            trip['status'] = 'active'
+        else:
+            trip['status'] = 'future'
+        trip['display_time'] = _format_display_time(trip['departure_time'])
+
+        if trip['originating_stop']['stop_id'] == stop_a_id:
+            stop_a_trips.append(trip)
+        elif trip['originating_stop']['stop_id'] == stop_b_id:
+            stop_b_trips.append(trip)
+
+    next_a = next((t for t in stop_a_trips if t['status'] == 'future'), None)
+    next_b = next((t for t in stop_b_trips if t['status'] == 'future'), None)
+
+    return {
+        'stop_a_name': app.config.get('STOP_A_NAME', "Swan's Island"),
+        'stop_b_name': app.config.get('STOP_B_NAME', 'Bass Harbor'),
+        'stop_a_trips': stop_a_trips,
+        'stop_b_trips': stop_b_trips,
+        'next_a': next_a,
+        'next_b': next_b,
+        'today': datetime.now().strftime('%A, %B %-d, %Y'),
+    }
+
+@app.route("/")
 def index():
-    return "<h1>Hello There</h1>"
+    return render_template('index.html', **_build_schedule_context())
+
+@app.route("/schedule/fragment")
+def schedule_fragment():
+    return render_template('_schedule.html', **_build_schedule_context())
 
 @app.route("/routes")
 def all_routes():

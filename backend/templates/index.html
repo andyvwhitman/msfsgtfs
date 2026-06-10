@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<div id="container">
+    <header>
+        <h1>Ferry Schedule</h1>
+        <p class="date">{{ today }}</p>
+    </header>
+    {% include "_schedule.html" %}
+</div>
+{% endblock %}
