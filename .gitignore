@@ -1,5 +1,9 @@
 # OS / editor
 .DS_Store
+.vscode/
+
+# Claude Code — share settings.json, keep personal overrides local
+.claude/settings.local.json
 
 # Python
 __pycache__/
