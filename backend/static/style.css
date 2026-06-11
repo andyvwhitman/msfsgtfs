@@ -1,3 +1,5 @@
+/* Styles for the ferry schedule app: nav, home schedule (next/in-progress/today),
+   the four trip states (past/future/active/next), and the weekly calendar grid. */
 *, *::before, *::after { box-sizing: border-box; }
 
 body {

@@ -1,3 +1,5 @@
+{# Live schedule fragment: next departure, in-progress voyage, today's trips.
+   Self-refreshes every 60s via HTMX; also served standalone at /schedule/fragment. #}
 <div id="schedule-live"
      hx-get="/schedule/fragment{{ now_qs }}"
      hx-trigger="every 60s"

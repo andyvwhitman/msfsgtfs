@@ -1,36 +1,29 @@
 # MSFS-GTFS
 
-A website for viewing Maine State Ferry Service schedules using the standard General Transit Feed Specification data format.
+A website for viewing Maine State Ferry Service schedules using the standard General Transit
+Feed Specification (GTFS) data format. Currently supports Bass Harbor ⇄ Swan's Island.
 
-Routes currently supported:
-- Bass Harbor <=> Swan's Island
+The app is a single Flask application that renders its pages server-side (Jinja templates +
+HTMX for live updates) from a hand-authored GTFS feed.
 
-The app is a single Flask application that renders the schedule pages server-side
-(Jinja templates + HTMX for live updates).
+## Quick start
 
----
-
-### GTFS Feed
-
-The feed is hand-authored. The raw GTFS files live in `msfs_gtfs_package/` and are
-zipped into `backend/Archive.zip` (a generated artifact) by the build utility:
-
-```
-python build_feed.py
+```bash
+python3 -m venv venv && source venv/bin/activate
+pip install -r backend/requirements.txt
+python build_feed.py            # zip msfs_gtfs_package/ -> backend/Archive.zip
+cd backend && flask run         # open http://localhost:5000
 ```
 
-Edit any file in `msfs_gtfs_package/`, re-run `build_feed.py`, and restart the app
-to pick up the changes.
+To edit the schedule: change a file in `msfs_gtfs_package/`, re-run `python build_feed.py`,
+and restart the app (the feed is read once at startup).
 
----
+## Documentation
 
-### Running
+Full documentation lives in [`docs/`](docs/README.md):
 
-1. Create virtual environment: ```virtualenv venv```
-2. Activate virtual environment: ```source ./venv/bin/activate```
-3. Install requirements: ```pip install -r backend/requirements.txt```
-4. Build the feed: ```python build_feed.py```
-5. Run the app: ```cd backend && flask run```
-
-Then open http://localhost:5000 — the landing page shows today's live schedule, and
-`/schedule` shows the full weekly schedule.
+- [Overview](docs/overview.md) — what it does, plus dev & production install/deploy/run
+- [Architecture](docs/architecture.md) — system topology and design rationale
+- [Backend](docs/backend.md) — Flask app, GTFS domain model, schedule logic
+- [Frontend](docs/frontend.md) — Jinja templates, HTMX, CSS design system
+- [Code Style](docs/code-style.md) — docstring/comment conventions

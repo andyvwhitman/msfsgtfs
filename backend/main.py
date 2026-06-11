@@ -1,3 +1,11 @@
+"""Flask app for the Maine State Ferry Service schedule.
+
+Serves three server-rendered pages backed by a GTFS feed read into memory at
+startup: the live "today" schedule (``/``), its 60s HTMX refresh fragment
+(``/schedule/fragment``), and the recurring weekly calendar (``/schedule``).
+The thin Route/Trip/Stop/StopTime wrappers below adapt gtfs_kit's DataFrames
+into plain objects the templates can consume.
+"""
 from pathlib import Path
 from urllib.parse import quote
 
@@ -10,12 +18,16 @@ from flask import Flask, render_template, request
 app = Flask(__name__)
 app.config.from_pyfile('config.py')
 
+# The GTFS feed is small and read-only, so it is loaded once at import and held
+# in memory for the life of the process. Rebuild Archive.zip with build_feed.py.
 feed_path = Path(__file__).parent / app.config.get('GTFS_FEED_PATH', 'Archive.zip')
 feed = gk.read_feed(feed_path, dist_units='mi')
 
 WEEKDAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
 
 class Route():
+    """A single GTFS route and the trips that run on it."""
+
     def __init__(self, feed, route_id):
         self.feed = feed
         self.route_id = route_id
@@ -39,20 +51,25 @@ class Route():
         self.network_id = route.network_id
 
     def get_trips_today(self):
+        """Return this route's Trip objects scheduled for the current date."""
         date = datetime.now().strftime("%Y%m%d")
         return self.get_trips_on_date(date)
 
     def get_trips_on_date(self, date):
+        """Return this route's Trip objects scheduled on a date (YYYYMMDD)."""
         all_trips = self.feed.get_trips(date=date)
         route_trips = all_trips[all_trips["route_id"] == self.route_id]
 
         return [Trip(self.feed, t.trip_id) for t in route_trips.itertuples()]
 
     def get_weekly_schedule(self):
-        # Build the recurring weekly pattern straight from calendar.txt weekday flags
-        # rather than date-based lookups: the feed's service window may not cover the
-        # current date, so get_trips(date=...) can return empty even though the
-        # recurring schedule is well-defined.
+        """Return the recurring Mon-Sun schedule as {weekday: [trip summaries]}.
+
+        Built from the calendar.txt weekday flags rather than per-date lookups,
+        so the pattern is well-defined even when the feed's service window does
+        not cover the current date. Each day's trips are time-ordered and carry
+        a display_time.
+        """
         calendar = self.feed.calendar
         schedule = {}
         for day in WEEKDAYS:
@@ -70,6 +87,8 @@ class Route():
         return schedule
 
 class Trip():
+    """A single GTFS trip: one scheduled sailing with its ordered stop times."""
+
     def __init__(self, feed, trip_id):
         self.feed = feed
         self.trip_id = trip_id
@@ -94,21 +113,26 @@ class Trip():
 
     @property
     def originating_stop(self):
+        """The Stop where this trip begins (first stop time)."""
         return Stop(self.feed, self.stop_times[0].stop_id)
 
     @property
     def destination_stop(self):
+        """The Stop where this trip ends (last stop time)."""
         return Stop(self.feed, self.stop_times[-1].stop_id)
 
     @property
     def departure_time(self):
+        """GTFS departure time from the originating stop ("HH:MM:SS")."""
         return self.stop_times[0].departure_time
 
     @property
     def arrival_time(self):
+        """GTFS arrival time at the destination stop ("HH:MM:SS")."""
         return self.stop_times[-1].arrival_time
 
     def get_trip_summary(self):
+        """Return a plain-dict summary of this trip for templates/JSON."""
         trip_summary = {}
 
         trip_summary['trip_id'] = self.trip_id
@@ -126,6 +150,8 @@ class Trip():
         return f"{self.trip_id}"
 
 class Stop():
+    """A single GTFS stop (a ferry terminal)."""
+
     def __init__(self, feed, stop_id):
         self.feed = feed
         self.stop_id = stop_id
@@ -151,6 +177,7 @@ class Stop():
         self.platform_code = stop.platform_code
 
     def get_stop_summary(self):
+        """Return a plain-dict summary of this stop for templates/JSON."""
         stop_summary = {}
 
         stop_summary['stop_id'] = self.stop_id
@@ -162,6 +189,8 @@ class Stop():
         return stop_summary
 
 class StopTime():
+    """One stop on a trip: its arrival/departure times and sequence position."""
+
     def __init__(self, feed, trip_id, arrival_time, departure_time, stop_sequence, stop_id):
         self.feed = feed
         self.trip = trip_id
@@ -175,12 +204,14 @@ class StopTime():
 
 
 def _parse_gtfs_time(t):
+    """Parse a GTFS "HH:MM:SS" string into a time, wrapping hours >= 24 to same-day."""
     h, m, s = map(int, t.split(':'))
     if h >= 24:
         h -= 24
     return datetime.now().replace(hour=h, minute=m, second=s, microsecond=0).time()
 
 def _format_display_time(t):
+    """Format a GTFS "HH:MM:SS" string for display, e.g. "6:45 AM"."""
     h, m, _ = map(int, t.split(':'))
     if h >= 24:
         h -= 24
@@ -189,13 +220,17 @@ def _format_display_time(t):
     return f"{h12}:{m:02d} {period}"
 
 def _abbreviate(name):
-    # Initials of each alphabetic word: "Swan's Island" -> "SI", "Bass Harbor" -> "BH".
+    """Return the initials of each word, e.g. "Swan's Island" -> "SI"."""
     letters = [w[0].upper() for w in name.split() if w[:1].isalpha()]
     return ''.join(letters) or name[:2].upper()
 
 def _current_datetime():
-    # Real wall clock, unless in DEV_MODE and a ?now= override is supplied (dev-only tool
-    # for viewing the schedule "as if" it were another time/date).
+    """Return the current datetime, honoring a dev-only ?now= override.
+
+    In DEV_MODE a ?now= query param lets you view the schedule as if it were
+    another date/time; otherwise this is the real wall clock. Accepts an ISO
+    datetime/date or a bare "HH:MM[:SS]" (combined with today).
+    """
     if app.config.get('DEV_MODE'):
         override = request.args.get('now')
         if override:
@@ -212,13 +247,17 @@ def _current_datetime():
     return datetime.now()
 
 def _gtfs_seconds(t):
-    # Seconds since midnight; keeps GTFS times >= 24:00:00 intact for arithmetic.
+    """Return seconds since midnight for a GTFS "HH:MM:SS" (keeps hours >= 24)."""
     h, m, s = map(int, t.split(':'))
     return h * 3600 + m * 60 + s
 
 def _trip_progress_pct(departure_time, arrival_time, now_seconds):
-    # Guesstimate of voyage completion based on elapsed/expected duration. This is a
-    # stand-in until GPS/AIS data is wired in for a true position-based estimate.
+    """Return percent of a voyage elapsed (0-100), clamped.
+
+    A guesstimate from elapsed/expected duration, given the GTFS departure and
+    arrival "HH:MM:SS" times and the current seconds-since-midnight. This is a
+    stand-in until GPS/AIS data provides a true position-based estimate.
+    """
     dep_s = _gtfs_seconds(departure_time)
     arr_s = _gtfs_seconds(arrival_time)
     if arr_s <= dep_s:
@@ -227,6 +266,13 @@ def _trip_progress_pct(departure_time, arrival_time, now_seconds):
     return max(0.0, min(100.0, pct))
 
 def _build_schedule_context():
+    """Build the template context for the live "today" schedule.
+
+    Classifies each of today's trips as past/active/future, flags the single
+    soonest upcoming departure, assembles any in-progress voyages with a
+    progress percentage, and includes the dev time-override fields. Respects
+    the ?now= override via _current_datetime.
+    """
     route_id = app.config.get('ROUTE_ID', '1000')
     stop_a_id = app.config.get('STOP_A_ID', '1001')
     stop_b_id = app.config.get('STOP_B_ID', '1002')
@@ -298,14 +344,17 @@ def _build_schedule_context():
 
 @app.route("/")
 def index():
+    """Render the home page: today's live schedule and next/in-progress info."""
     return render_template('index.html', **_build_schedule_context())
 
 @app.route("/schedule/fragment")
 def schedule_fragment():
+    """Render the HTMX fragment the home page polls every 60s."""
     return render_template('_schedule.html', **_build_schedule_context())
 
 @app.route("/schedule")
 def schedule():
+    """Render the recurring weekly (Mon-Sun) schedule calendar."""
     route = Route(feed, app.config.get('ROUTE_ID', '1000'))
     stop_a_name = app.config.get('STOP_A_NAME', "Swan's Island")
     stop_b_name = app.config.get('STOP_B_NAME', 'Bass Harbor')

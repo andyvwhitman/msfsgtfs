@@ -1,0 +1,11 @@
+site_name: MSFS-GTFS Docs
+docs_dir: docs
+theme:
+  name: material
+nav:
+  - Home: README.md
+  - Overview: overview.md
+  - Architecture: architecture.md
+  - Backend: backend.md
+  - Frontend: frontend.md
+  - Code Style: code-style.md

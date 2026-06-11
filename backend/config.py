@@ -1,3 +1,8 @@
+"""Flask configuration, loaded via app.config.from_pyfile.
+
+Defines the environment flag (DEV_MODE), the GTFS feed path, and the route/stop
+identifiers and display names for the single supported ferry route.
+"""
 import os
 
 # Single source of truth for the environment. Set MSFSGTFS_ENV=production to disable

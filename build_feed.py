@@ -18,6 +18,11 @@ OUTPUT = ROOT / "backend" / "Archive.zip"
 
 
 def build_feed():
+    """Zip msfs_gtfs_package/*.txt into backend/Archive.zip at the archive root.
+
+    Exits with an error if no source .txt files are found. Each file is stored
+    by bare name so gtfs_kit.read_feed finds them at the top of the archive.
+    """
     txt_files = sorted(SOURCE_DIR.glob("*.txt"))
     if not txt_files:
         raise SystemExit(f"No .txt files found in {SOURCE_DIR}")
