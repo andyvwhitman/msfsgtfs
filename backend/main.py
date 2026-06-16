@@ -22,6 +22,7 @@ app.config.from_pyfile('config.py')
 # The GTFS feed is small and read-only, so it is loaded once at import and held
 # in memory for the life of the process. Rebuild Archive.zip with build_feed.py.
 feed_path = Path(__file__).parent / app.config.get('GTFS_FEED_PATH', 'Archive.zip')
+print(feed_path)
 feed = gk.read_feed(feed_path, dist_units='mi')
 
 WEEKDAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
