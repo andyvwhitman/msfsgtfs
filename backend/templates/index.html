@@ -5,6 +5,7 @@
     <header>
         <h1>Ferry Schedule</h1>
         <p class="date">{{ today }}</p>
+        {% if wednesday_note %}<p class="wed-today">{{ wednesday_note }}</p>{% endif %}
     </header>
     {% include "_schedule.html" %}
 </div>

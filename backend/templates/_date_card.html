@@ -1,0 +1,28 @@
+{# Plain schedule card for one date: two port columns, no live status classes.
+   Rendered standalone for the HTMX date-picker target. #}
+<div class="full-schedule date-card">
+    <h2>{{ date_display }}</h2>
+    {% if has_service %}
+    <div class="schedule-grid">
+        <div class="schedule-col">
+            <h3>{{ stop_a_name }}</h3>
+            {% for trip in stop_a_trips %}
+                <div class="trip future">{{ trip.display_time }}</div>
+            {% else %}
+                <div class="trip empty">&mdash;</div>
+            {% endfor %}
+        </div>
+        <div class="schedule-col">
+            <h3>{{ stop_b_name }}</h3>
+            {% for trip in stop_b_trips %}
+                <div class="trip future">{{ trip.display_time }}</div>
+            {% else %}
+                <div class="trip empty">&mdash;</div>
+            {% endfor %}
+        </div>
+    </div>
+    {% if note %}<div class="wed-note">{{ note }}</div>{% endif %}
+    {% else %}
+    <p class="no-more">No ferry service on this date.</p>
+    {% endif %}
+</div>

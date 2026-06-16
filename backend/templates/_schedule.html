@@ -9,17 +9,51 @@
         <h2>Next Departure</h2>
         <div class="next-grid">
             <div>
-                <span class="stop-name">{{ stop_a_name }}</span>
+                <span class="station-name stop-name">
+                    {{ stop_a_name }}
+                    {% if stop_a_maps %}
+                    <button type="button" class="maps-btn"
+                            data-stop="{{ stop_a_name }}"
+                            data-apple="{{ stop_a_maps.apple }}"
+                            data-google="{{ stop_a_maps.google }}"
+                            aria-label="Get directions to {{ stop_a_name }}">
+                        <svg class="maps-icon" width="13" height="13" viewBox="0 0 24 24"
+                             fill="none" stroke="currentColor" stroke-width="2"
+                             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                            <circle cx="12" cy="10" r="3"></circle>
+                        </svg>
+                    </button>
+                    {% endif %}
+                </span>
                 {% if next_a %}
                     <span class="next-time">{{ next_a.display_time }}</span>
+                    {% if next_a.countdown %}<span class="countdown">({{ next_a.countdown }})</span>{% endif %}
                 {% else %}
                     <span class="no-more">No more trips today</span>
                 {% endif %}
             </div>
             <div>
-                <span class="stop-name">{{ stop_b_name }}</span>
+                <span class="station-name stop-name">
+                    {{ stop_b_name }}
+                    {% if stop_b_maps %}
+                    <button type="button" class="maps-btn"
+                            data-stop="{{ stop_b_name }}"
+                            data-apple="{{ stop_b_maps.apple }}"
+                            data-google="{{ stop_b_maps.google }}"
+                            aria-label="Get directions to {{ stop_b_name }}">
+                        <svg class="maps-icon" width="13" height="13" viewBox="0 0 24 24"
+                             fill="none" stroke="currentColor" stroke-width="2"
+                             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                            <circle cx="12" cy="10" r="3"></circle>
+                        </svg>
+                    </button>
+                    {% endif %}
+                </span>
                 {% if next_b %}
                     <span class="next-time">{{ next_b.display_time }}</span>
+                    {% if next_b.countdown %}<span class="countdown">({{ next_b.countdown }})</span>{% endif %}
                 {% else %}
                     <span class="no-more">No more trips today</span>
                 {% endif %}
@@ -32,8 +66,8 @@
         {% for voyage in active_trips %}
         <div class="voyage">
             <div class="voyage-ports">
-                <span class="port from">{{ voyage.from_name }}</span>
-                <span class="port to">{{ voyage.to_name }}</span>
+                <span class="station-name port from">{{ voyage.from_name }}</span>
+                <span class="station-name port to">{{ voyage.to_name }}</span>
             </div>
             <div class="progress-track">
                 <div class="progress-fill" style="width: {{ voyage.progress_pct }}%"></div>
@@ -47,21 +81,22 @@
         {% else %}
         <p class="no-more">No trip in progress</p>
         {% endfor %}
+        <a class="map-link" href="/map">Live map &rarr;</a>
     </section>
 
     <section class="full-schedule">
         <h2>Today's Schedule</h2>
         <div class="schedule-grid">
             <div class="schedule-col">
-                <h3>{{ stop_a_name }}</h3>
+                <h3 class="station-name">{{ stop_a_name }}</h3>
                 {% for trip in stop_a_trips %}
-                    <div class="trip {{ trip.status }}{% if trip.is_next %} next{% endif %}">{{ trip.display_time }}</div>
+                    <div class="trip {{ trip.status }}{% if trip.is_next %} next{% endif %}">{{ trip.display_time }}{% if trip.countdown %} <span class="trip-countdown">({{ trip.countdown }})</span>{% endif %}</div>
                 {% endfor %}
             </div>
             <div class="schedule-col">
-                <h3>{{ stop_b_name }}</h3>
+                <h3 class="station-name">{{ stop_b_name }}</h3>
                 {% for trip in stop_b_trips %}
-                    <div class="trip {{ trip.status }}{% if trip.is_next %} next{% endif %}">{{ trip.display_time }}</div>
+                    <div class="trip {{ trip.status }}{% if trip.is_next %} next{% endif %}">{{ trip.display_time }}{% if trip.countdown %} <span class="trip-countdown">({{ trip.countdown }})</span>{% endif %}</div>
                 {% endfor %}
             </div>
         </div>

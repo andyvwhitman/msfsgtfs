@@ -1,0 +1,22 @@
+{# Reusable two-port departure grid: one column per port, time-ordered.
+   direction_id 1 departs port A (Swan's Island); 0 departs port B (Bass Harbor). #}
+{% macro day_block(trips, a_abbr, b_abbr) %}
+<div class="port-grid">
+    <div class="port-head">{{ a_abbr }}</div>
+    <div class="port-head">{{ b_abbr }}</div>
+    <div class="port-col">
+        {% for trip in trips if trip.direction_id == 1 %}
+            <div class="trip future">{{ trip.display_time }}</div>
+        {% else %}
+            <div class="trip empty">&mdash;</div>
+        {% endfor %}
+    </div>
+    <div class="port-col">
+        {% for trip in trips if trip.direction_id == 0 %}
+            <div class="trip future">{{ trip.display_time }}</div>
+        {% else %}
+            <div class="trip empty">&mdash;</div>
+        {% endfor %}
+    </div>
+</div>
+{% endmacro %}

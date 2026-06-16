@@ -1,44 +1,33 @@
-{# Weekly schedule page: horizontal 7-day calendar, two port columns per day. #}
+{# Weekly schedule page: the current week, horizontal on desktop / stacked on mobile.
+   Each day is resolved by its real date, so Wednesday shows the right variant. #}
 {% extends "base.html" %}
-{% block title %}Weekly Schedule{% endblock %}
+{% from "_macros.html" import day_block %}
+{% block title %}This Week{% endblock %}
 {% block content %}
 <div id="container" class="wide">
     <header>
-        <h1>Weekly Schedule</h1>
-        <p class="date">{{ stop_a_name }} &harr; {{ stop_b_name }}</p>
+        <h1>This Week</h1>
+        <p class="date">{{ stop_a_name }} &harr; {{ stop_b_name }} &nbsp;&middot;&nbsp; Week of {{ week_label }}</p>
         <p class="legend">{{ stop_a_abbr }} = {{ stop_a_name }} &nbsp;&middot;&nbsp; {{ stop_b_abbr }} = {{ stop_b_name }}</p>
     </header>
 
     <div class="week-scroll">
         <div class="week-grid">
-            {% for day, trips in weekly_schedule.items() %}
+            {% for day in week %}
             <div class="day-col">
-                <h2>{{ day }}</h2>
-                {% if trips %}
-                <div class="port-grid">
-                    <div class="port-head">{{ stop_a_abbr }}</div>
-                    <div class="port-head">{{ stop_b_abbr }}</div>
-                    <div class="port-col">
-                        {% for trip in trips if trip.direction_id == 1 %}
-                            <div class="trip future">{{ trip.display_time }}</div>
-                        {% else %}
-                            <div class="trip empty">&mdash;</div>
-                        {% endfor %}
-                    </div>
-                    <div class="port-col">
-                        {% for trip in trips if trip.direction_id == 0 %}
-                            <div class="trip future">{{ trip.display_time }}</div>
-                        {% else %}
-                            <div class="trip empty">&mdash;</div>
-                        {% endfor %}
-                    </div>
-                </div>
+                <h2>{{ day.weekday }}<span class="day-date">{{ day.date_display }}</span></h2>
+                {% if day.trips %}
+                    {{ day_block(day.trips, stop_a_abbr, stop_b_abbr) }}
                 {% else %}
-                <p class="no-more">No service</p>
+                    <p class="no-more">No service</p>
                 {% endif %}
             </div>
             {% endfor %}
         </div>
     </div>
+
+    {% for day in week if day.note %}
+    <p class="wed-footnote">* {{ day.note }}</p>
+    {% endfor %}
 </div>
 {% endblock %}

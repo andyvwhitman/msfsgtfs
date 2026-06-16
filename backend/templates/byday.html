@@ -1,0 +1,25 @@
+{# Comprehensive schedule: every day-type pattern stacked vertically, with the
+   two Wednesday variants listed separately. #}
+{% extends "base.html" %}
+{% from "_macros.html" import day_block %}
+{% block title %}Full Schedule{% endblock %}
+{% block content %}
+<div id="container">
+    <header>
+        <h1>Full Schedule</h1>
+        <p class="date">{{ stop_a_name }} &harr; {{ stop_b_name }}</p>
+        <p class="legend">{{ stop_a_abbr }} = {{ stop_a_name }} &nbsp;&middot;&nbsp; {{ stop_b_abbr }} = {{ stop_b_name }}</p>
+    </header>
+
+    {% for day in days %}
+    <section class="day-card">
+        <h2>{{ day.label }}</h2>
+        {% if day.trips %}
+            {{ day_block(day.trips, stop_a_abbr, stop_b_abbr) }}
+        {% else %}
+            <p class="no-more">No service</p>
+        {% endif %}
+    </section>
+    {% endfor %}
+</div>
+{% endblock %}

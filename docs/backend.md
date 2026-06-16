@@ -36,9 +36,15 @@ Thin wrappers turn `gtfs_kit`'s DataFrames into objects the templates can use:
   - `get_trips_on_date(date)` — `Trip`s scheduled on a `YYYYMMDD` date (honors
     `calendar.txt` + `calendar_dates.txt`).
   - `get_trips_today()` — convenience wrapper for the current date.
-  - `get_weekly_schedule()` — the recurring **Mon–Sun** pattern as
-    `{weekday: [trip summary, ...]}`, built from `calendar.txt` weekday flags rather than
-    per-date lookups so it's well-defined regardless of the current date.
+  - `get_trips_for_services(service_ids)` — `Trip`s for an explicit set of `service_id`s
+    (used by the by-day page to pull each day-type pattern directly).
+  - `get_week_schedule(anchor_date)` — the **Mon–Sun** schedule for the week containing
+    `anchor_date`, resolved by each day's **actual date** via `get_trips_on_date`, so
+    `calendar_dates` exceptions (e.g. the 1st/3rd-Wednesday service) are honored. Returns a
+    list of per-day dicts (`weekday`, `date`, `date_display`, `trips`, and a Wednesday `note`).
+  - `get_comprehensive_schedule()` — every distinct day-type pattern in display order, with
+    Wednesday split into its 1st/3rd (from `calendar_dates`) and 2nd/4th/5th (from `calendar`)
+    variants. Returns `[{label, trips}, ...]`.
 - **`Trip`** — one sailing. Exposes `originating_stop`/`destination_stop` (as `Stop`s),
   `departure_time`/`arrival_time` (GTFS `"HH:MM:SS"`), and `get_trip_summary()` which returns
   a plain dict (the shape the templates and schedule logic consume).
@@ -57,6 +63,16 @@ GTFS times are `"HH:MM:SS"` strings and may exceed `24:00:00` for post-midnight 
   in for a true position-based estimate.
 - `_abbreviate(name)` → initials, e.g. `"Swan's Island"` → `"SI"` (used for weekly column
   headers).
+- `_summarize_trips(trips)` → time-ordered trip-summary dicts with a `display_time` added;
+  shared by the weekly, by-day, and date-lookup views.
+- `_use_military()` → reads the `time_format` cookie; `True` for 24-hour time. `_format_display_time`
+  honors it, so the 12-/24-hour choice applies site-wide. Toggled at `/prefs/time-format`
+  (sets a 1-year cookie and redirects back, so the preference persists across sessions).
+- `_format_countdown(departure_time, now_seconds)` → time until a departure as `"in Hh MMm"`
+  / `"in Mm"`; shown beside the Next Departure times and recomputed every render.
+- `_wednesday_note(day_date)` → a short note on which Wednesday schedule a date runs (ordinal
+  Wednesday-of-month + whether the `calendar_dates`-added 1st/3rd service or the regular
+  2nd/4th/5th service is active).
 
 ## Schedule logic
 
@@ -79,11 +95,18 @@ Builds the context for `/` and the `/schedule/fragment` poll:
 
 The four trip states map to colors in the UI — see [Frontend](frontend.md#trip-status-colors).
 
-### `get_weekly_schedule()` (weekly page)
+### `get_week_schedule(anchor_date)` (weekly page)
 
-For each weekday, selects the `service_id`s whose `calendar.txt` flag is set, gathers this
-route's trips for those services, time-orders them, and attaches a `display_time`. The
-`/schedule` route also passes port abbreviations via `_abbreviate`.
+Resolves each day of the current week by its real date, so Wednesday correctly shows the
+1st/3rd vs 2nd/4th/5th variant (the earlier `get_weekly_schedule` built only from
+`calendar.txt` flags and so always showed the 2nd/4th/5th Wednesday). The `/schedule` route
+anchors on `_current_datetime().date()` (honoring `?now=`), builds a `week_label` date range,
+and passes port abbreviations via `_abbreviate`.
+
+### `_build_date_context(date_str)` (date-picker page)
+
+Builds the plain per-port departure lists for one date — **no** past/active/next status, so
+the card is identical whether or not the date is today. Adds a Wednesday `note` when relevant.
 
 ## Routes
 
@@ -91,7 +114,13 @@ route's trips for those services, time-orders them, and attaches a `display_time
 |---|---|---|
 | `/` | `index()` | `index.html` — full home page |
 | `/schedule/fragment` | `schedule_fragment()` | `_schedule.html` — the HTMX-polled fragment |
-| `/schedule` | `schedule()` | `schedule.html` — weekly calendar |
+| `/schedule` | `schedule()` | `schedule.html` — current-week calendar |
+| `/by-day` | `by_day()` | `byday.html` — every day-type pattern, stacked |
+| `/date` | `date_lookup()` | `datepick.html` — date picker (prefilled to today) |
+| `/date/fragment` | `date_fragment()` | `_date_card.html` — one date's plain card (HTMX) |
+| `/map` | `vessel_map()` | `map.html` — VesselFinder live AIS map |
+| `/about` | `about()` | `about.html` — About + Buy Me a Coffee (footer-linked) |
+| `/prefs/time-format` | `toggle_time_format()` | flips the 12-/24-hour cookie, redirects back |
 
 ## Dev-only time override
 

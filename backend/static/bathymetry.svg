@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600" viewBox="0 0 600 600">
+  <!-- Faint nautical-chart bathymetry of an Atlantic island area: two islands with
+       coastlines, depth contours (isobaths) hugging them so the water reads shallow
+       near land and deeper offshore, a channel between the two contour sets, and a
+       couple of shelf-break contours up top. Tiles across the page background.
+       Tune visibility via the stroke/fill opacities; scale via background-size. -->
+
+  <!-- Islands (land): faint fill + slightly stronger coastline -->
+  <g fill="#2a7d8c" fill-opacity="0.05" stroke="#2a7d8c" stroke-opacity="0.13" stroke-width="1.2">
+    <path d="M170 170 C200 158 235 165 250 185 C262 201 258 225 270 240 C280 253 272 272 250 278 C228 284 205 276 188 282 C168 289 150 278 150 258 C150 240 158 232 152 216 C147 200 150 180 170 170 Z"/>
+    <path d="M420 390 C440 382 460 388 468 402 C475 414 472 430 480 440 C487 449 481 462 466 466 C451 470 436 464 425 468 C412 473 400 465 400 452 C400 440 405 435 401 424 C397 413 400 398 420 390 Z"/>
+  </g>
+
+  <!-- Depth contours around each island, and shelf-break lines -->
+  <g fill="none" stroke="#2a7d8c" stroke-opacity="0.07" stroke-width="1">
+    <!-- island A isobaths -->
+    <path d="M165 156 C202 142 245 150 263 175 C277 194 272 223 286 241 C298 257 288 281 261 289 C234 297 206 287 186 294 C162 302 140 289 140 264 C140 242 149 232 142 213 C136 194 140 169 165 156 Z"/>
+    <path d="M158 140 C202 124 254 134 275 164 C292 187 286 221 302 243 C316 262 304 291 272 301 C240 311 207 299 183 307 C155 316 129 301 129 271 C129 245 139 233 131 210 C124 188 129 158 158 140 Z"/>
+    <path d="M150 122 C202 104 264 116 288 151 C308 178 300 219 319 245 C336 268 322 302 285 314 C248 326 209 312 181 321 C148 331 117 313 117 278 C117 248 129 234 119 207 C111 183 117 147 150 122 Z"/>
+    <!-- island B isobaths -->
+    <path d="M414 378 C440 368 466 376 476 394 C485 409 481 430 491 442 C500 453 492 470 472 475 C452 480 433 472 419 477 C402 483 386 472 386 455 C386 439 393 433 387 419 C382 405 388 386 414 378 Z"/>
+    <path d="M408 364 C440 352 474 362 486 384 C497 403 491 429 503 444 C514 457 504 478 480 484 C456 490 432 480 415 486 C394 493 374 480 374 459 C374 439 383 432 375 414 C369 399 376 372 408 364 Z"/>
+    <!-- shelf-break / channel contours -->
+    <path d="M0 70 C80 40 160 100 240 70 C320 40 400 100 480 70 C540 48 580 80 600 65"/>
+    <path d="M0 108 C90 80 170 134 250 106 C330 78 410 130 490 102 C545 84 582 112 600 102"/>
+    <path d="M0 540 C70 512 150 560 230 536 C320 510 410 560 500 534 C552 520 582 542 600 532"/>
+  </g>
+</svg>

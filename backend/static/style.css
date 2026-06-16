@@ -1,11 +1,31 @@
 /* Styles for the ferry schedule app: nav, home schedule (next/in-progress/today),
-   the four trip states (past/future/active/next), and the weekly calendar grid. */
+   the four trip states (past/future/active/next), the weekly calendar, the by-day
+   and date-lookup pages, and the live map. Colors come from the nautical (seafoam
+   teal) palette defined in :root so the whole theme is tunable in one place. */
+
+:root {
+    --bg: #eef4f4;        /* page background — pale teal sea mist */
+    --surface: #ffffff;   /* cards */
+    --ink: #1c3a3a;       /* primary text — deep teal */
+    --muted: #5c7a7a;     /* secondary text / labels */
+    --faint: #9bb0b0;     /* tertiary / "no more trips" */
+    --accent: #2a7d8c;    /* teal — nav active, links */
+    --next: #2e8b57;      /* sea green — the next departure */
+    --live: #3a8fa0;      /* steel-teal — in-progress trips + progress bar */
+    --border: #d8e6e6;    /* hairlines, dividers, empty marks */
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
 *, *::before, *::after { box-sizing: border-box; }
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: #f5f5f5;
-    color: #1a1a1a;
+    /* Pale teal base + a very faint nautical-chart bathymetry pattern (nested
+       depth contours) for a touch more ocean color without distracting from the
+       cards. Edit backend/static/bathymetry.svg to tune it. */
+    background-color: var(--bg);
+    background-image: url("/static/bathymetry.svg");
+    color: var(--ink);
     margin: 0;
     padding: 0;
 }
@@ -23,27 +43,28 @@ body {
 /* Nav */
 .site-nav {
     display: flex;
+    flex-wrap: wrap;
     justify-content: center;
     gap: 1.5rem;
-    background: white;
+    background: var(--surface);
     padding: 0.9rem 1rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--shadow);
 }
 
 .site-nav a {
     text-decoration: none;
-    color: #666;
+    color: var(--muted);
     font-size: 0.9rem;
     font-weight: 600;
 }
 
 .site-nav a.active {
-    color: #007aff;
+    color: var(--accent);
 }
 
 /* Weekly schedule — horizontal calendar */
 .legend {
-    color: #888;
+    color: var(--muted);
     font-size: 0.78rem;
     margin: 0.4rem 0 0;
 }
@@ -61,10 +82,10 @@ body {
 }
 
 .day-col {
-    background: white;
+    background: var(--surface);
     border-radius: 8px;
     padding: 0.9rem 0.75rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--shadow);
 }
 
 .day-col h2 {
@@ -72,6 +93,14 @@ body {
     margin: 0 0 0.6rem;
     font-weight: 700;
     text-align: center;
+}
+
+.day-date {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 400;
+    color: var(--muted);
+    margin-top: 0.1rem;
 }
 
 .port-grid {
@@ -83,9 +112,9 @@ body {
 .port-head {
     font-size: 0.72rem;
     font-weight: 700;
-    color: #888;
+    color: var(--muted);
     text-align: center;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--border);
     padding-bottom: 0.25rem;
 }
 
@@ -101,7 +130,36 @@ body {
 }
 
 .trip.empty {
-    color: #ddd;
+    color: var(--border);
+}
+
+/* Note on which Wednesday schedule is running (date card) */
+.wed-note {
+    grid-column: 1 / -1;
+    margin-top: 0.6rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.7rem;
+    color: var(--muted);
+    font-style: italic;
+    text-align: center;
+}
+
+/* Wednesday-schedule footnote, below the This Week grid */
+.wed-footnote {
+    margin: 0.75rem 0 0;
+    font-size: 0.75rem;
+    color: var(--muted);
+    font-style: italic;
+    text-align: center;
+}
+
+/* Super-minimal Wednesday note at the top of the home page */
+.wed-today {
+    margin: 0.35rem 0 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--accent);
 }
 
 header {
@@ -116,18 +174,18 @@ header h1 {
 }
 
 .date {
-    color: #666;
+    color: var(--muted);
     margin: 0;
     font-size: 0.9rem;
 }
 
 /* Next Departures */
 .next-departures {
-    background: white;
+    background: var(--surface);
     border-radius: 8px;
     padding: 1.25rem 1.5rem;
     margin-bottom: 1.5rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--shadow);
 }
 
 .next-departures h2,
@@ -135,7 +193,7 @@ header h1 {
     font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: #888;
+    color: var(--muted);
     margin: 0 0 0.75rem;
     font-weight: 600;
 }
@@ -146,31 +204,59 @@ header h1 {
     gap: 1rem;
 }
 
+/* Shared station-name treatment — identical across the next-departure,
+   in-progress, and today's-schedule cards so the two ports always read the same. */
+.station-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--ink);
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+/* Next-departure: keep the station name + maps icon on one row */
 .next-grid .stop-name {
-    display: block;
-    font-size: 0.8rem;
-    color: #888;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
     margin-bottom: 0.2rem;
 }
 
 .next-time {
     font-size: 1.5rem;
     font-weight: 600;
-    color: #0a8f3c;
+    color: var(--next);
+}
+
+/* Time-until-departure countdown next to a Next Departure time */
+.countdown {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: var(--muted);
+    margin-top: 0.1rem;
+}
+
+/* Inline countdown beside each time in the today's-schedule list */
+.trip-countdown {
+    font-size: 0.78rem;
+    font-weight: 400;
+    color: var(--muted);
+    margin-left: 0.3rem;
 }
 
 .no-more {
     font-size: 0.85rem;
-    color: #aaa;
+    color: var(--faint);
     font-style: italic;
 }
 
 /* Full Schedule */
 .full-schedule {
-    background: white;
+    background: var(--surface);
     border-radius: 8px;
     padding: 1.25rem 1.5rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--shadow);
 }
 
 .schedule-grid {
@@ -180,16 +266,13 @@ header h1 {
 }
 
 .schedule-col h3 {
-    font-size: 0.85rem;
-    font-weight: 600;
     margin: 0 0 0.5rem;
-    color: #444;
 }
 
 .trip {
     padding: 0.3rem 0;
     font-size: 0.95rem;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid var(--border);
 }
 
 .trip:last-child {
@@ -201,38 +284,49 @@ header h1 {
 }
 
 .trip.future {
-    color: #111;
+    color: var(--ink);
 }
 
-/* In-progress trip — blue "live now", italic, distinct from the green "next" */
+/* In-progress trip — steel-teal "live now", italic, distinct from the green "next" */
 .trip.active {
     font-style: italic;
     font-weight: 600;
-    color: #007aff;
+    color: var(--live);
 }
 
-/* Next trip to depart — green accent */
+/* Next trip to depart — sea-green accent */
 .trip.next {
-    color: #0a8f3c;
+    color: var(--next);
     font-weight: 700;
 }
 
 /* Trip in progress */
 .in-progress {
-    background: white;
+    background: var(--surface);
     border-radius: 8px;
     padding: 1.25rem 1.5rem;
     margin-bottom: 1.5rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--shadow);
 }
 
 .in-progress h2 {
     font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: #888;
+    color: var(--muted);
     margin: 0 0 0.75rem;
     font-weight: 600;
+}
+
+/* Tiny corner link from the in-progress card to the live map */
+.map-link {
+    display: block;
+    text-align: right;
+    margin-top: 0.6rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--accent);
+    text-decoration: none;
 }
 
 .voyage + .voyage {
@@ -245,15 +339,10 @@ header h1 {
     justify-content: space-between;
 }
 
-.voyage-ports .port {
-    font-size: 0.95rem;
-    font-weight: 600;
-}
-
 .progress-track {
     position: relative;
     height: 4px;
-    background: #e6e6e6;
+    background: var(--border);
     border-radius: 2px;
     margin: 0.85rem 0 0.6rem;
 }
@@ -263,7 +352,7 @@ header h1 {
     left: 0;
     top: 0;
     height: 100%;
-    background: #0a8f3c;
+    background: var(--live);
     border-radius: 2px;
 }
 
@@ -277,7 +366,165 @@ header h1 {
 
 .voyage-times {
     font-size: 0.8rem;
-    color: #888;
+    color: var(--muted);
+}
+
+/* By-day page — one card per day-type pattern, stacked vertically */
+.day-card {
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 1.1rem 1.5rem;
+    margin-bottom: 1.25rem;
+    box-shadow: var(--shadow);
+}
+
+/* Match the This Week day-column header treatment (centered) */
+.day-card h2 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--ink);
+    text-align: center;
+    margin: 0 0 0.75rem;
+}
+
+/* Give the by-day port grid a bit more room than the tight weekly columns */
+.day-card .port-col .trip {
+    font-size: 0.95rem;
+}
+
+/* Date-picker page */
+.date-form {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.date-form label {
+    font-size: 0.85rem;
+    color: var(--muted);
+    font-weight: 600;
+}
+
+.date-form input {
+    margin-left: 0.5rem;
+    font-size: 0.95rem;
+    padding: 0.3rem 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--ink);
+}
+
+.date-card h2 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--ink);
+    text-transform: none;
+    letter-spacing: 0;
+    margin: 0 0 0.9rem;
+}
+
+/* Live map */
+.map-container {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    background: var(--surface);
+    min-height: 520px;
+}
+
+.map-container iframe {
+    display: block;
+    border: 0;
+}
+
+/* Footer (every page) */
+.site-footer {
+    text-align: center;
+    padding: 1.5rem 1rem 2rem;
+    margin-top: 2rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+}
+
+.site-footer a {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.time-toggle {
+    margin-top: 0.5rem;
+    font-size: 0.72rem;
+    color: var(--faint);
+}
+
+.time-toggle .active {
+    color: var(--ink);
+    font-weight: 600;
+}
+
+/* Footer maps-provider toggle — only shown once a provider has been chosen */
+.map-toggle {
+    margin-top: 0.35rem;
+    font-size: 0.72rem;
+    color: var(--faint);
+}
+
+.map-toggle[hidden] {
+    display: none;
+}
+
+.map-toggle a {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.map-toggle a.active {
+    color: var(--ink);
+}
+
+/* Footer disclaimer — unofficial-site / accuracy / "missed the boat" note */
+.disclaimer {
+    max-width: 36rem;
+    margin: 0.75rem auto 0;
+    font-size: 0.7rem;
+    line-height: 1.5;
+    color: var(--faint);
+}
+
+/* About page */
+.about-prose {
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    box-shadow: var(--shadow);
+    line-height: 1.6;
+}
+
+.about-prose p {
+    margin: 0 0 1rem;
+}
+
+.about-prose ul {
+    margin: 0 0 1rem;
+    padding-left: 1.25rem;
+    color: var(--muted);
+}
+
+.about-prose li {
+    margin: 0.15rem 0;
+}
+
+.about-prose .signoff {
+    margin-bottom: 0;
+    font-weight: 600;
+    color: var(--muted);
+}
+
+.bmc {
+    text-align: center;
+    margin-top: 1.5rem;
 }
 
 /* Debug time override (dev only) */
@@ -306,4 +553,167 @@ header h1 {
 
 .debug-bar a {
     color: #8a6d1b;
+}
+
+/* Minimal maps icon beside a next-departure station name. appearance:none strips
+   the native button chrome (grey fill/border) some desktop browsers add, so it
+   renders as the bare iOS-style outline pin everywhere. */
+.maps-btn {
+    appearance: none;
+    -webkit-appearance: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--muted);
+    cursor: pointer;
+    line-height: 0;
+}
+
+.maps-btn:hover,
+.maps-btn:focus-visible {
+    color: var(--accent);
+}
+
+.maps-icon {
+    display: block;
+}
+
+/* Shared modal — used by the maps chooser and the add-to-home-screen guide */
+.modal[hidden] {
+    display: none;
+}
+
+.modal {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.modal__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(28, 58, 58, 0.45);
+}
+
+.modal__card {
+    position: relative;
+    background: var(--surface);
+    border-radius: 10px;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.2);
+    padding: 1.25rem 1.25rem 1rem;
+    width: 100%;
+    max-width: 320px;
+    text-align: center;
+}
+
+.modal__card h3 {
+    margin: 0 0 0.2rem;
+    font-size: 1rem;
+    color: var(--ink);
+}
+
+.modal__sub {
+    margin: 0 0 1rem;
+    font-size: 0.85rem;
+    color: var(--muted);
+}
+
+.modal__actions {
+    display: grid;
+    gap: 0.6rem;
+}
+
+.maps-choice {
+    appearance: none;
+    -webkit-appearance: none;
+    display: block;
+    width: 100%;
+    padding: 0.6rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--accent);
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.maps-choice:hover,
+.maps-choice:focus-visible {
+    background: var(--bg);
+}
+
+.modal__close {
+    margin-top: 0.85rem;
+    border: none;
+    background: none;
+    color: var(--muted);
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+
+/* Add-to-home-screen: footer link (mobile only, revealed by JS) + step list */
+.a2hs[hidden] {
+    display: none;
+}
+
+.a2hs {
+    margin-top: 0.35rem;
+    font-size: 0.72rem;
+}
+
+.a2hs a {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.a2hs-steps[hidden] {
+    display: none;
+}
+
+.a2hs-steps {
+    margin: 0 0 0.5rem;
+    padding-left: 1.25rem;
+    text-align: left;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--ink);
+}
+
+.a2hs-steps li {
+    margin: 0.35rem 0;
+}
+
+/* Responsive: stack the weekly calendar vertically on phones */
+@media (max-width: 720px) {
+    .week-scroll {
+        overflow-x: visible;
+    }
+
+    .week-grid {
+        grid-template-columns: 1fr;
+        min-width: 0;
+        gap: 1rem;
+    }
+
+    .day-col h2 {
+        font-size: 1rem;
+    }
+
+    .port-col .trip {
+        font-size: 0.95rem;
+    }
 }

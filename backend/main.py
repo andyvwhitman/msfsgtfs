@@ -6,14 +6,15 @@ startup: the live "today" schedule (``/``), its 60s HTMX refresh fragment
 The thin Route/Trip/Stop/StopTime wrappers below adapt gtfs_kit's DataFrames
 into plain objects the templates can consume.
 """
+import math
 from pathlib import Path
 from urllib.parse import quote
 
-from datetime import datetime
+from datetime import datetime, date, timedelta
 
 import gtfs_kit as gk
 
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect
 
 app = Flask(__name__)
 app.config.from_pyfile('config.py')
@@ -24,6 +25,15 @@ feed_path = Path(__file__).parent / app.config.get('GTFS_FEED_PATH', 'Archive.zi
 feed = gk.read_feed(feed_path, dist_units='mi')
 
 WEEKDAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+
+@app.context_processor
+def inject_globals():
+    """Expose values available to every template (footer year + time/map prefs)."""
+    return {
+        'current_year': datetime.now().year,
+        'military_time': _use_military(),
+        'map_provider': _map_provider(),
+    }
 
 class Route():
     """A single GTFS route and the trips that run on it."""
@@ -62,29 +72,73 @@ class Route():
 
         return [Trip(self.feed, t.trip_id) for t in route_trips.itertuples()]
 
-    def get_weekly_schedule(self):
-        """Return the recurring Mon-Sun schedule as {weekday: [trip summaries]}.
+    def get_trips_for_services(self, service_ids):
+        """Return this route's Trip objects whose service_id is in service_ids."""
+        ids = {str(s) for s in service_ids}
+        route_trips = self.feed.trips[
+            (self.feed.trips['route_id'] == self.route_id)
+            & (self.feed.trips['service_id'].astype(str).isin(ids))
+        ]
+        return [Trip(self.feed, t.trip_id) for t in route_trips.itertuples()]
 
-        Built from the calendar.txt weekday flags rather than per-date lookups,
-        so the pattern is well-defined even when the feed's service window does
-        not cover the current date. Each day's trips are time-ordered and carry
-        a display_time.
+    def get_week_schedule(self, anchor_date):
+        """Return the Mon-Sun schedule for the week containing anchor_date.
+
+        Each day is resolved by its actual date via get_trips_on_date, so
+        calendar_dates exceptions (e.g. the 1st/3rd-Wednesday service) are
+        honored — unlike a pattern built from weekday flags alone. Returns a
+        list of per-day dicts (weekday name, date, time-ordered trips, and for
+        Wednesday a note on which variant is running) in Mon-Sun order.
+        """
+        monday = anchor_date - timedelta(days=anchor_date.weekday())
+        week = []
+        for offset, name in enumerate(WEEKDAYS):
+            day_date = monday + timedelta(days=offset)
+            day = {
+                'weekday': name.capitalize(),
+                'date': day_date,
+                'date_display': day_date.strftime('%b %-d'),
+                'trips': _summarize_trips(self.get_trips_on_date(day_date.strftime('%Y%m%d'))),
+            }
+            if name == 'wednesday':
+                day['note'] = _wednesday_note(day_date)
+            week.append(day)
+        return week
+
+    def get_comprehensive_schedule(self):
+        """Return every distinct day-type pattern in display order.
+
+        Mon/Tue/Fri/Sat share a single service in summer but are listed
+        separately for clarity; Wednesday is split into its 1st/3rd and
+        2nd/4th/5th variants, which live in calendar_dates and calendar
+        respectively. Service ids are derived from the feed, not hardcoded.
         """
         calendar = self.feed.calendar
-        schedule = {}
-        for day in WEEKDAYS:
-            service_ids = calendar[calendar[day].astype(int) == 1]['service_id'].astype(str)
-            day_trips = self.feed.trips[
-                (self.feed.trips['route_id'] == self.route_id)
-                & (self.feed.trips['service_id'].astype(str).isin(service_ids))
-            ]
-            trips = [Trip(self.feed, t.trip_id).get_trip_summary() for t in day_trips.itertuples()]
-            trips.sort(key=lambda t: t['departure_time'])
-            for trip in trips:
-                trip['display_time'] = _format_display_time(trip['departure_time'])
-            schedule[day.capitalize()] = trips
+        calendar_dates = self.feed.calendar_dates
 
-        return schedule
+        def services_for_weekday(day):
+            return calendar[calendar[day].astype(int) == 1]['service_id'].astype(str).tolist()
+
+        wed_regular = services_for_weekday('wednesday')  # 2nd/4th/5th Wed
+        wed_exception = (
+            calendar_dates[calendar_dates['exception_type'].astype(int) == 1]['service_id']
+            .astype(str).unique().tolist()  # 1st/3rd Wed (added via calendar_dates)
+        )
+
+        rows = [
+            ('Monday', services_for_weekday('monday')),
+            ('Tuesday', services_for_weekday('tuesday')),
+            ('Wednesday (1st & 3rd)', wed_exception),
+            ('Wednesday (2nd, 4th & 5th)', wed_regular),
+            ('Thursday', services_for_weekday('thursday')),
+            ('Friday', services_for_weekday('friday')),
+            ('Saturday', services_for_weekday('saturday')),
+            ('Sunday', services_for_weekday('sunday')),
+        ]
+        return [
+            {'label': label, 'trips': _summarize_trips(self.get_trips_for_services(svc))}
+            for label, svc in rows
+        ]
 
 class Trip():
     """A single GTFS trip: one scheduled sailing with its ordered stop times."""
@@ -210,14 +264,38 @@ def _parse_gtfs_time(t):
         h -= 24
     return datetime.now().replace(hour=h, minute=m, second=s, microsecond=0).time()
 
+def _use_military():
+    """True if the visitor opted into 24-hour (military) time via the cookie."""
+    return request.cookies.get('time_format') == '24'
+
+def _map_provider():
+    """Return the visitor's saved maps provider ('apple'/'google'), or None if unset."""
+    provider = request.cookies.get('map_provider')
+    return provider if provider in ('apple', 'google') else None
+
 def _format_display_time(t):
-    """Format a GTFS "HH:MM:SS" string for display, e.g. "6:45 AM"."""
+    """Format a GTFS "HH:MM:SS" for display, honoring the 12-/24-hour cookie.
+
+    Returns e.g. "6:45 AM" by default, or "06:45" when the visitor has chosen
+    24-hour time (persisted across sessions via the time_format cookie).
+    """
     h, m, _ = map(int, t.split(':'))
     if h >= 24:
         h -= 24
+    if _use_military():
+        return f"{h:02d}:{m:02d}"
     period = 'AM' if h < 12 else 'PM'
     h12 = h % 12 or 12
     return f"{h12}:{m:02d} {period}"
+
+def _format_countdown(departure_time, now_seconds):
+    """Return the time until a departure as "in Hh MMm" / "in Mm", or None if passed."""
+    delta = _gtfs_seconds(departure_time) - now_seconds
+    if delta < 0:
+        return None
+    minutes = math.ceil(delta / 60)
+    hours, mins = divmod(minutes, 60)
+    return f"in {hours}h {mins:02d}m" if hours else f"in {mins}m"
 
 def _abbreviate(name):
     """Return the initials of each word, e.g. "Swan's Island" -> "SI"."""
@@ -265,6 +343,78 @@ def _trip_progress_pct(departure_time, arrival_time, now_seconds):
     pct = (now_seconds - dep_s) / (arr_s - dep_s) * 100
     return max(0.0, min(100.0, pct))
 
+def _maps_links(stop_id, label):
+    """Return Apple/Google Maps URLs pinned to a terminal's coordinates.
+
+    Uses the stop's exact GTFS lat/lon with the display name as the pin label,
+    so both providers land precisely on the terminal regardless of how its
+    street address geocodes. Consumed by the next-departure "open in maps" modal.
+    """
+    stop = Stop(feed, stop_id)
+    ll = f"{stop.stop_lat},{stop.stop_lon}"
+    return {
+        'apple': f"https://maps.apple.com/?q={quote(label)}&ll={ll}",
+        'google': f"https://www.google.com/maps/search/?api=1&query={ll}",
+    }
+
+def _summarize_trips(trips):
+    """Return time-sorted trip summaries with a display_time added.
+
+    Shared by the weekly, by-day, and date-lookup views, which all render the
+    same two-port departure layout from a list of Trip objects.
+    """
+    summaries = [t.get_trip_summary() for t in trips]
+    summaries.sort(key=lambda s: s['departure_time'])
+    for s in summaries:
+        s['display_time'] = _format_display_time(s['departure_time'])
+    return summaries
+
+def _wednesday_note(day_date):
+    """Return a short note on which Wednesday schedule applies to a date.
+
+    Combines the ordinal Wednesday-of-month with whether the date runs the
+    calendar_dates-added 1st/3rd service or the regular 2nd/4th/5th service,
+    so the label reflects the feed rather than a hardcoded rule.
+    """
+    ordinal = (day_date.day - 1) // 7 + 1
+    suffix = {1: 'st', 2: 'nd', 3: 'rd'}.get(ordinal, 'th')
+    date_str = day_date.strftime('%Y%m%d')
+    active = set(feed.get_trips(date=date_str)['service_id'].astype(str))
+    exception_services = set(
+        feed.calendar_dates.loc[
+            feed.calendar_dates['exception_type'].astype(int) == 1, 'service_id'
+        ].astype(str)
+    )
+    variant = '1st & 3rd schedule' if active & exception_services else '2nd, 4th & 5th schedule'
+    return f"{ordinal}{suffix} Wednesday — {variant}"
+
+def _build_date_context(date_str):
+    """Build context for the date-lookup card: plain per-port lists for a date.
+
+    Deliberately carries no live status (past/next/in-progress) — the list is
+    identical regardless of whether the date is today.
+    """
+    stop_a_id = app.config.get('STOP_A_ID', '1001')
+    stop_b_id = app.config.get('STOP_B_ID', '1002')
+
+    route = Route(feed, app.config.get('ROUTE_ID', '1000'))
+    trips = _summarize_trips(route.get_trips_on_date(date_str))
+    stop_a_trips = [t for t in trips if t['originating_stop']['stop_id'] == stop_a_id]
+    stop_b_trips = [t for t in trips if t['originating_stop']['stop_id'] == stop_b_id]
+
+    day_date = datetime.strptime(date_str, '%Y%m%d').date()
+    context = {
+        'stop_a_name': app.config.get('STOP_A_NAME', "Swan's Island"),
+        'stop_b_name': app.config.get('STOP_B_NAME', 'Bass Harbor'),
+        'stop_a_trips': stop_a_trips,
+        'stop_b_trips': stop_b_trips,
+        'date_display': day_date.strftime('%A, %B %-d, %Y'),
+        'has_service': bool(trips),
+    }
+    if day_date.weekday() == 2:  # Wednesday
+        context['note'] = _wednesday_note(day_date)
+    return context
+
 def _build_schedule_context():
     """Build the template context for the live "today" schedule.
 
@@ -279,6 +429,7 @@ def _build_schedule_context():
 
     now_dt = _current_datetime()
     now = now_dt.time()
+    now_seconds = now.hour * 3600 + now.minute * 60 + now.second
 
     route = Route(feed, route_id)
     trips = [t.get_trip_summary() for t in route.get_trips_on_date(now_dt.strftime('%Y%m%d'))]
@@ -294,6 +445,7 @@ def _build_schedule_context():
         else:
             trip['status'] = 'future'
         trip['display_time'] = _format_display_time(trip['departure_time'])
+        trip['countdown'] = _format_countdown(trip['departure_time'], now_seconds)
 
         if trip['originating_stop']['stop_id'] == stop_a_id:
             stop_a_trips.append(trip)
@@ -310,7 +462,11 @@ def _build_schedule_context():
         soonest = min(upcoming, key=lambda t: _gtfs_seconds(t['departure_time']))
         soonest['is_next'] = True
 
-    now_seconds = now.hour * 3600 + now.minute * 60 + now.second
+    if next_a:
+        next_a['countdown'] = _format_countdown(next_a['departure_time'], now_seconds)
+    if next_b:
+        next_b['countdown'] = _format_countdown(next_b['departure_time'], now_seconds)
+
     active_trips = []
     for trip in trips:
         if trip['status'] != 'active':
@@ -328,9 +484,14 @@ def _build_schedule_context():
     override = request.args.get('now') if dev_mode else None
     now_qs = '?now=' + quote(override) if override else ''
 
+    stop_a_name = app.config.get('STOP_A_NAME', "Swan's Island")
+    stop_b_name = app.config.get('STOP_B_NAME', 'Bass Harbor')
+
     return {
-        'stop_a_name': app.config.get('STOP_A_NAME', "Swan's Island"),
-        'stop_b_name': app.config.get('STOP_B_NAME', 'Bass Harbor'),
+        'stop_a_name': stop_a_name,
+        'stop_b_name': stop_b_name,
+        'stop_a_maps': _maps_links(stop_a_id, stop_a_name),
+        'stop_b_maps': _maps_links(stop_b_id, stop_b_name),
         'stop_a_trips': stop_a_trips,
         'stop_b_trips': stop_b_trips,
         'next_a': next_a,
@@ -340,6 +501,7 @@ def _build_schedule_context():
         'dev_mode': dev_mode,
         'now_qs': now_qs,
         'now_input': now_dt.strftime('%Y-%m-%dT%H:%M'),
+        'wednesday_note': _wednesday_note(now_dt.date()) if now_dt.weekday() == 2 else None,
     }
 
 @app.route("/")
@@ -354,18 +516,97 @@ def schedule_fragment():
 
 @app.route("/schedule")
 def schedule():
-    """Render the recurring weekly (Mon-Sun) schedule calendar."""
+    """Render the weekly (Mon-Sun) calendar for the current week."""
     route = Route(feed, app.config.get('ROUTE_ID', '1000'))
     stop_a_name = app.config.get('STOP_A_NAME', "Swan's Island")
     stop_b_name = app.config.get('STOP_B_NAME', 'Bass Harbor')
+    week = route.get_week_schedule(_current_datetime().date())
+    week_label = (f"{week[0]['date'].strftime('%b %-d')} – "
+                  f"{week[-1]['date'].strftime('%-d, %Y')}")
     return render_template(
         'schedule.html',
         stop_a_name=stop_a_name,
         stop_b_name=stop_b_name,
         stop_a_abbr=_abbreviate(stop_a_name),
         stop_b_abbr=_abbreviate(stop_b_name),
-        weekly_schedule=route.get_weekly_schedule(),
+        week=week,
+        week_label=week_label,
     )
+
+@app.route("/by-day")
+def by_day():
+    """Render the comprehensive schedule: every day-type pattern, stacked vertically."""
+    route = Route(feed, app.config.get('ROUTE_ID', '1000'))
+    stop_a_name = app.config.get('STOP_A_NAME', "Swan's Island")
+    stop_b_name = app.config.get('STOP_B_NAME', 'Bass Harbor')
+    return render_template(
+        'byday.html',
+        stop_a_name=stop_a_name,
+        stop_b_name=stop_b_name,
+        stop_a_abbr=_abbreviate(stop_a_name),
+        stop_b_abbr=_abbreviate(stop_b_name),
+        days=route.get_comprehensive_schedule(),
+    )
+
+@app.route("/date")
+def date_lookup():
+    """Render the date-picker page, prefilled with today's sailings."""
+    today = _current_datetime().date()
+    return render_template(
+        'datepick.html',
+        today=today.isoformat(),
+        **_build_date_context(today.strftime('%Y%m%d')),
+    )
+
+@app.route("/date/fragment")
+def date_fragment():
+    """Render the date-lookup card for the chosen date (HTMX target)."""
+    raw = request.args.get('date', '')
+    try:
+        day_date = date.fromisoformat(raw)
+    except ValueError:
+        day_date = _current_datetime().date()
+    return render_template('_date_card.html', **_build_date_context(day_date.strftime('%Y%m%d')))
+
+@app.route("/map")
+def vessel_map():
+    """Render the live AIS map (VesselFinder embed) framed on both terminals."""
+    stop_a = Stop(feed, app.config.get('STOP_A_ID', '1001'))
+    stop_b = Stop(feed, app.config.get('STOP_B_ID', '1002'))
+    return render_template(
+        'map.html',
+        stop_a_name=app.config.get('STOP_A_NAME', "Swan's Island"),
+        stop_b_name=app.config.get('STOP_B_NAME', 'Bass Harbor'),
+        center_lat=(stop_a.stop_lat + stop_b.stop_lat) / 2,
+        center_lon=(stop_a.stop_lon + stop_b.stop_lon) / 2,
+        zoom=12,
+    )
+
+@app.route("/about")
+def about():
+    """Render the About page (prose + Buy Me a Coffee; linked from the footer only)."""
+    return render_template('about.html')
+
+@app.route("/prefs/time-format")
+def toggle_time_format():
+    """Flip the 12-/24-hour time preference, persist it in a cookie, and go back."""
+    new = '12' if _use_military() else '24'
+    resp = redirect(request.referrer or '/')
+    resp.set_cookie('time_format', new, max_age=60 * 60 * 24 * 365, samesite='Lax')
+    return resp
+
+@app.route("/prefs/map-provider")
+def set_map_provider():
+    """Persist the preferred maps provider in a cookie and return to the prior page.
+
+    Backs the footer Apple/Google toggle, which only appears once a provider has
+    been chosen (here or via the next-departure modal, which sets the same cookie).
+    """
+    provider = request.args.get('provider')
+    resp = redirect(request.referrer or '/')
+    if provider in ('apple', 'google'):
+        resp.set_cookie('map_provider', provider, max_age=60 * 60 * 24 * 365, samesite='Lax')
+    return resp
 
 if __name__ == '__main__':
     app.run(debug=app.config.get('DEV_MODE', False), port=8000)

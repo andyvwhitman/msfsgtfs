@@ -14,8 +14,15 @@ into the app.
   graphic for any sailing currently underway, and the full list of today's departures from
   each port, color-coded by status (past / upcoming / in-progress / next). The page refreshes
   itself every 60 seconds.
-- **Weekly schedule (`/schedule`)** — the recurring Monday–Sunday timetable laid out as a
-  horizontal calendar, with a column per day split into the two ports.
+- **Weekly schedule (`/schedule`)** — the **current week's** Monday–Sunday timetable as a
+  calendar (a column per day split into the two ports), horizontal on desktop and stacked on
+  phones. The Wednesday column notes which variant (1st/3rd vs 2nd/4th/5th) is running.
+- **Schedule by day (`/by-day`)** — every distinct day-type pattern stacked vertically, with
+  the two Wednesday schedules listed separately.
+- **Find a date (`/date`)** — pick any date to see that day's departures (a plain list, no
+  live highlighting).
+- **Live map (`/map`)** — a VesselFinder embedded AIS map framed on the two terminals,
+  showing live positions of all vessels in the area (staging for future ferry AIS tracking).
 
 ## How it works (high level)
 

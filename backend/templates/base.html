@@ -11,8 +11,169 @@
 <body>
     <nav class="site-nav">
         <a href="/" {% if request.path == '/' %}class="active"{% endif %}>Home</a>
-        <a href="/schedule" {% if request.path == '/schedule' %}class="active"{% endif %}>Weekly Schedule</a>
+        <a href="/schedule" {% if request.path == '/schedule' %}class="active"{% endif %}>This Week</a>
+        <a href="/by-day" {% if request.path == '/by-day' %}class="active"{% endif %}>Full Schedule</a>
+        <a href="/date" {% if request.path == '/date' %}class="active"{% endif %}>By Date</a>
+        <a href="/map" {% if request.path == '/map' %}class="active"{% endif %}>Live Map</a>
     </nav>
     {% block content %}{% endblock %}
+
+    {# "Open in Maps" chooser for the next-departure station icons. Lives outside
+       the HTMX-swapped schedule fragment and uses delegated clicks, so it keeps
+       working after each 60s refresh. Shown only until a provider is chosen;
+       after that the icon opens the saved provider directly. #}
+    <div id="maps-modal" class="modal" hidden>
+        <div class="modal__backdrop" data-close></div>
+        <div class="modal__card" role="dialog" aria-modal="true" aria-labelledby="maps-modal-title">
+            <h3 id="maps-modal-title">Open in Maps</h3>
+            <p id="maps-modal-sub" class="modal__sub"></p>
+            <div class="modal__actions">
+                <button type="button" class="maps-choice" data-provider="apple">Apple Maps</button>
+                <button type="button" class="maps-choice" data-provider="google">Google Maps</button>
+            </div>
+            <button type="button" class="modal__close" data-close>Cancel</button>
+        </div>
+    </div>
+
+    {# Add-to-home-screen guide. Platform-specific steps; revealed by JS only on
+       iOS/Android (see footer link), so desktop visitors never see it. #}
+    <div id="a2hs-modal" class="modal" hidden>
+        <div class="modal__backdrop" data-close></div>
+        <div class="modal__card" role="dialog" aria-modal="true" aria-labelledby="a2hs-title">
+            <h3 id="a2hs-title">Add to Home Screen</h3>
+            <ol id="a2hs-ios" class="a2hs-steps" hidden>
+                <li>Tap the <strong>menu</strong> button (&#8943;) in Safari's toolbar.</li>
+                <li>Tap <strong>Share</strong>.</li>
+                <li>Tap <strong>View More</strong>.</li>
+                <li>Tap <strong>Add to Home Screen</strong>.</li>
+            </ol>
+            <ol id="a2hs-android" class="a2hs-steps" hidden>
+                <li>Tap the <strong>&#8942;</strong> menu in the top-right of Chrome.</li>
+                <li>Tap <strong>Add to Home screen</strong> (or <strong>Install app</strong>).</li>
+                <li>Tap <strong>Add</strong> to confirm.</li>
+            </ol>
+            <button type="button" class="modal__close" data-close>Got it</button>
+        </div>
+    </div>
+
+    <script>
+    (function () {
+        // Generic modal close: backdrop / close button / Escape.
+        document.addEventListener('click', function (e) {
+            var closer = e.target.closest('[data-close]');
+            if (closer) {
+                var m = closer.closest('.modal');
+                if (m) { m.hidden = true; }
+            }
+        });
+        document.addEventListener('keydown', function (e) {
+            if (e.key !== 'Escape') { return; }
+            document.querySelectorAll('.modal:not([hidden])').forEach(function (m) {
+                m.hidden = true;
+            });
+        });
+
+        // Maps provider chooser.
+        (function () {
+            var modal = document.getElementById('maps-modal');
+            var sub = document.getElementById('maps-modal-sub');
+            var pendingBtn = null;
+
+            function getPref() {
+                var m = document.cookie.match(/(?:^|;\s*)map_provider=(apple|google)/);
+                return m ? m[1] : null;
+            }
+            function savePref(provider) {
+                document.cookie = 'map_provider=' + provider +
+                    '; max-age=31536000; path=/; samesite=Lax';
+            }
+            function openMaps(btn, provider) {
+                window.open(btn.dataset[provider], '_blank', 'noopener');
+            }
+
+            document.addEventListener('click', function (e) {
+                var icon = e.target.closest('.maps-btn');
+                if (icon) {
+                    e.preventDefault();
+                    var pref = getPref();
+                    if (pref) {
+                        openMaps(icon, pref);
+                    } else {
+                        pendingBtn = icon;
+                        sub.textContent = icon.dataset.stop;
+                        modal.hidden = false;
+                    }
+                    return;
+                }
+                var choice = e.target.closest('.maps-choice');
+                if (choice && pendingBtn) {
+                    savePref(choice.dataset.provider);
+                    openMaps(pendingBtn, choice.dataset.provider);
+                    modal.hidden = true;
+                    // First-time selection: reload so the server renders the footer
+                    // Apple/Google toggle from the freshly-set cookie.
+                    window.location.reload();
+                }
+            });
+        })();
+
+        // Add to Home Screen — only on iOS/Android, only when not already installed.
+        // Deferred until the DOM is parsed, since #a2hs-link lives in the footer
+        // below this script.
+        function initAddToHomeScreen() {
+            var ua = navigator.userAgent || '';
+            var isIOS = /iphone|ipad|ipod/i.test(ua) ||
+                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            var isAndroid = /android/i.test(ua);
+            if (!isIOS && !isAndroid) { return; }
+
+            var standalone = window.matchMedia('(display-mode: standalone)').matches ||
+                window.navigator.standalone === true;
+            if (standalone) { return; }
+
+            var link = document.getElementById('a2hs-link');
+            var modal = document.getElementById('a2hs-modal');
+            var steps = document.getElementById(isIOS ? 'a2hs-ios' : 'a2hs-android');
+            if (!link || !modal || !steps) { return; }
+
+            link.closest('.a2hs').hidden = false;
+            steps.hidden = false;
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                modal.hidden = false;
+            });
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initAddToHomeScreen);
+        } else {
+            initAddToHomeScreen();
+        }
+    })();
+    </script>
+
+    <footer class="site-footer">
+        <div>Built by Andy and Karter &middot; &copy; {{ current_year }} &middot; <a href="/about">About</a></div>
+        <div class="time-toggle">
+            {% if military_time %}
+                <a href="/prefs/time-format">12-hour</a> &middot; <span class="active">24-hour</span>
+            {% else %}
+                <span class="active">12-hour</span> &middot; <a href="/prefs/time-format">24-hour</a>
+            {% endif %}
+        </div>
+        <div class="map-toggle" id="map-toggle">
+            <a href="/prefs/map-provider?provider=apple" data-provider="apple"
+               {% if map_provider == 'apple' %}class="active"{% endif %}>Apple Maps</a>
+            &middot;
+            <a href="/prefs/map-provider?provider=google" data-provider="google"
+               {% if map_provider == 'google' %}class="active"{% endif %}>Google Maps</a>
+        </div>
+        <div class="a2hs" hidden><a href="#" id="a2hs-link">Add to Home Screen</a></div>
+        <p class="disclaimer">
+            Not affiliated with or endorsed by the Maine State Ferry Service.
+            Schedules are accurate to the best of our ability, but always confirm
+            with the official source before you travel &mdash; if you miss the boat,
+            you're on your own.
+        </p>
+    </footer>
 </body>
 </html>

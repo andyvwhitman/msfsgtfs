@@ -11,6 +11,8 @@ pages server-side with Jinja templates and uses HTMX for live updates.
 
 - **[Overview](overview.md)** — what the app is and does, and how to download, run, and
   deploy it in development and production.
+- **[Deployment](deployment.md)** — production deploy to the Hetzner server (gunicorn +
+  nginx + systemd), update/rollback steps, and a security checklist.
 - **[Architecture](architecture.md)** — system topology, what each piece is responsible
   for, and why it's built this way.
 - **[Backend](backend.md)** — how the Flask app, GTFS domain model, and schedule logic work.

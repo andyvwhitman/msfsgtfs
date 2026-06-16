@@ -1,0 +1,54 @@
+{# About page: prose (filled in manually later) plus a Buy Me a Coffee button.
+   Linked only from the footer, not the site nav. #}
+{% extends "base.html" %}
+{% block title %}About{% endblock %}
+{% block content %}
+<div id="container">
+    <header>
+        <h1>About</h1>
+    </header>
+
+    <div class="about-prose">
+        <p>After missing many ferries by misreading the schedule, and narrowly avoiding
+            many a car accident trying to read it on my phone, I finally decided to build
+            a better ferry schedule. Actually... I've had this idea for nearly four years,
+            and my crippling procrastination habit just never let it see the light of day.
+            Alas...</p>
+
+        <p>It's finally here: the better ferry schedule. I've thought meticulously about
+            what's going through my head every time I try to catch the ferry:</p>
+
+        <ul>
+            <li>When is the next ferry?</li>
+            <li>Will I make it?</li>
+            <li>When is the ferry after that?</li>
+            <li>How much lollygagging time do I have?</li>
+            <li>When is the last ferry?</li>
+        </ul>
+
+        <p>I built the tool I need to manage island life, even though I've since departed :(</p>
+
+        <p>I feel like this goes without saying, but the world always shocks you:</p>
+        <blockquote>Not
+            affiliated with or endorsed by the Maine State Ferry Service. Schedules are
+            accurate to the best of our ability, but always confirm with the official
+            source before you travel — if you miss the boat, you're on your own.</blockquote>
+
+        <p>If you have any comments or ideas that can make this a better tool for you,
+            feel free to reach out and let me know:
+            <a href="mailto:andyvwhitman@gmail.com">andyvwhitman@gmail.com</a>.
+        </p>
+        <p>If you don't like it, missed the ferry because of it, or just feel like you
+            have to be heard, feel free to not reach out I guess? It's a free country...
+            do what you want... I won't stop you...</p>
+
+        <p>Happy sailing!</p>
+
+        <p class="signoff">— Andy &amp; Karter</p>
+    </div>
+
+    <div class="bmc">
+        <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="andyvwhitman" data-color="#3a8fa0" data-emoji="☕" data-font="Inter" data-text="Buy me a coffee" data-outline-color="#ffffff" data-font-color="#ffffff" data-coffee-color="#FFDD00"></script>
+    </div>
+</div>
+{% endblock %}

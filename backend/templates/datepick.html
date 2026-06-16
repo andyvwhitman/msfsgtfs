@@ -1,0 +1,24 @@
+{# Date-picker page: choose a date, see that day's plain departure list (no live
+   highlighting). The card updates via HTMX as soon as the date changes. #}
+{% extends "base.html" %}
+{% block title %}By Date{% endblock %}
+{% block content %}
+<div id="container">
+    <header>
+        <h1>By Date</h1>
+        <p class="date">Pick a date to see that day's sailings</p>
+    </header>
+
+    <form class="date-form" onsubmit="return false;">
+        <label>Date
+            <input type="date" name="date" value="{{ today }}"
+                   hx-get="/date/fragment" hx-trigger="change"
+                   hx-target="#date-result" hx-swap="innerHTML">
+        </label>
+    </form>
+
+    <div id="date-result">
+        {% include "_date_card.html" %}
+    </div>
+</div>
+{% endblock %}

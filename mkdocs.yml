@@ -5,6 +5,7 @@ theme:
 nav:
   - Home: README.md
   - Overview: overview.md
+  - Deployment: deployment.md
   - Architecture: architecture.md
   - Backend: backend.md
   - Frontend: frontend.md

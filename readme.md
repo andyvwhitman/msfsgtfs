@@ -23,6 +23,7 @@ and restart the app (the feed is read once at startup).
 Full documentation lives in [`docs/`](docs/README.md):
 
 - [Overview](docs/overview.md) — what it does, plus dev & production install/deploy/run
+- [Deployment](docs/deployment.md) — production deploy to the Hetzner server + security checklist
 - [Architecture](docs/architecture.md) — system topology and design rationale
 - [Backend](docs/backend.md) — Flask app, GTFS domain model, schedule logic
 - [Frontend](docs/frontend.md) — Jinja templates, HTMX, CSS design system

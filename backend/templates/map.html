@@ -1,0 +1,27 @@
+{# Live vessel map: VesselFinder's free embedded AIS map (no account/API key).
+   The first script sets the map config; the second renders it in place. Centered
+   on the midpoint of the two terminals with a zoom tuned to frame both. #}
+{% extends "base.html" %}
+{% block title %}Live Map{% endblock %}
+{% block content %}
+<div id="container" class="wide">
+    <header>
+        <h1>Live Vessel Map</h1>
+        <p class="date">Vessels around {{ stop_a_name }} &amp; {{ stop_b_name }} (live AIS)</p>
+    </header>
+
+    <div class="map-container">
+        <script type="text/javascript">
+            var width = "100%";
+            var height = "520";
+            var names = true;
+            var latitude = {{ center_lat }};
+            var longitude = {{ center_lon }};
+            var zoom = {{ zoom }};
+        </script>
+        <script type="text/javascript" src="https://www.vesselfinder.com/aismap.js"></script>
+    </div>
+
+    <p class="legend">Live AIS positions of all vessels in view &middot; map by VesselFinder.</p>
+</div>
+{% endblock %}
