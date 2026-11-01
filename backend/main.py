@@ -13,6 +13,7 @@ from urllib.parse import quote
 from datetime import datetime, date, timedelta
 
 import gtfs_kit as gk
+import pandas as pd
 
 from flask import Flask, render_template, request, redirect
 
@@ -29,11 +30,12 @@ WEEKDAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 
 
 @app.context_processor
 def inject_globals():
-    """Expose values available to every template (footer year + time/map prefs)."""
+    """Expose values available to every template (footer year, prefs, notice)."""
     return {
         'current_year': datetime.now().year,
         'military_time': _use_military(),
         'map_provider': _map_provider(),
+        'notice': _active_notice(),
     }
 
 class Route():
@@ -106,25 +108,35 @@ class Route():
             week.append(day)
         return week
 
-    def get_comprehensive_schedule(self):
+    def get_comprehensive_schedule(self, anchor_date):
         """Return every distinct day-type pattern in display order.
 
-        Mon/Tue/Fri/Sat share a single service in summer but are listed
-        separately for clarity; Wednesday is split into its 1st/3rd and
-        2nd/4th/5th variants, which live in calendar_dates and calendar
-        respectively. Service ids are derived from the feed, not hardcoded.
+        Only services whose calendar window covers anchor_date are included,
+        so the page shows the current season (summer or winter) rather than
+        mixing every season in the feed. Each weekday is listed separately
+        for clarity; Wednesday is split into its 1st/3rd and 2nd/4th/5th
+        variants, which live in calendar_dates and calendar respectively.
+        Service ids are derived from the feed, not hardcoded.
         """
-        calendar = self.feed.calendar
-        calendar_dates = self.feed.calendar_dates
+        date_str = anchor_date.strftime('%Y%m%d')
+        calendar = self.feed.calendar[
+            (self.feed.calendar['start_date'].astype(str) <= date_str)
+            & (self.feed.calendar['end_date'].astype(str) >= date_str)
+        ]
+        season_ids = set(calendar['service_id'].astype(str))
+        calendar_dates = self.feed.calendar_dates[
+            self.feed.calendar_dates['service_id'].astype(str).isin(season_ids)
+        ]
 
         def services_for_weekday(day):
             return calendar[calendar[day].astype(int) == 1]['service_id'].astype(str).tolist()
 
         wed_regular = services_for_weekday('wednesday')  # 2nd/4th/5th Wed
-        wed_exception = (
-            calendar_dates[calendar_dates['exception_type'].astype(int) == 1]['service_id']
-            .astype(str).unique().tolist()  # 1st/3rd Wed (added via calendar_dates)
-        )
+        # 1st/3rd Wed: services added via calendar_dates on a Wednesday (holiday
+        # services are also added this way, but on other weekdays).
+        added = calendar_dates[calendar_dates['exception_type'].astype(int) == 1]
+        on_wednesday = pd.to_datetime(added['date'].astype(str), format='%Y%m%d').dt.weekday == 2
+        wed_exception = added[on_wednesday]['service_id'].astype(str).unique().tolist()
 
         rows = [
             ('Monday', services_for_weekday('monday')),
@@ -273,6 +285,15 @@ def _map_provider():
     """Return the visitor's saved maps provider ('apple'/'google'), or None if unset."""
     provider = request.cookies.get('map_provider')
     return provider if provider in ('apple', 'google') else None
+
+def _active_notice():
+    """Return the site notice message, or None if expired or already dismissed."""
+    last_day = app.config.get('NOTICE_LAST_DAY')
+    if not last_day or _current_datetime().date() > last_day:
+        return None
+    if request.cookies.get('notice_dismissed') == app.config.get('NOTICE_ID'):
+        return None
+    return app.config.get('NOTICE_MESSAGE')
 
 def _format_display_time(t):
     """Format a GTFS "HH:MM:SS" for display, honoring the 12-/24-hour cookie.
@@ -546,7 +567,7 @@ def by_day():
         stop_b_name=stop_b_name,
         stop_a_abbr=_abbreviate(stop_a_name),
         stop_b_abbr=_abbreviate(stop_b_name),
-        days=route.get_comprehensive_schedule(),
+        days=route.get_comprehensive_schedule(_current_datetime().date()),
     )
 
 @app.route("/date")
@@ -594,6 +615,14 @@ def toggle_time_format():
     new = '12' if _use_military() else '24'
     resp = redirect(request.referrer or '/')
     resp.set_cookie('time_format', new, max_age=60 * 60 * 24 * 365, samesite='Lax')
+    return resp
+
+@app.route("/prefs/dismiss-notice")
+def dismiss_notice():
+    """Remember that the current site notice was dismissed, and go back."""
+    resp = redirect(request.referrer or '/')
+    resp.set_cookie('notice_dismissed', app.config.get('NOTICE_ID', ''),
+                    max_age=60 * 60 * 24 * 365, samesite='Lax')
     return resp
 
 @app.route("/prefs/map-provider")

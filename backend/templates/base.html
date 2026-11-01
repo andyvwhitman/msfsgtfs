@@ -18,6 +18,15 @@
     </nav>
     {% block content %}{% endblock %}
 
+    {# Site notice toast (see NOTICE_* in config.py). Dismissing sets a cookie via
+       /prefs/dismiss-notice, the same no-JS pattern as the time-format toggle. #}
+    {% if notice %}
+    <div class="toast" role="status">
+        <span>{{ notice }}</span>
+        <a href="/prefs/dismiss-notice" class="toast__close" aria-label="Dismiss">&times;</a>
+    </div>
+    {% endif %}
+
     {# "Open in Maps" chooser for the next-departure station icons. Lives outside
        the HTMX-swapped schedule fragment and uses delegated clicks, so it keeps
        working after each 60s refresh. Shown only until a provider is chosen;

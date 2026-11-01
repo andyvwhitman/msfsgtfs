@@ -717,3 +717,43 @@ header h1 {
         font-size: 0.95rem;
     }
 }
+
+/* Site notice toast — pinned to the bottom of the viewport until dismissed. */
+.toast {
+    position: fixed;
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    margin: 0 auto;
+    max-width: 420px;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: var(--ink);
+    color: var(--surface);
+    border-radius: 10px;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.2);
+    padding: 0.75rem 0.75rem 0.75rem 1rem;
+    font-size: 0.9rem;
+    line-height: 1.35;
+    z-index: 50;   /* below .modal (100) */
+}
+
+.toast span {
+    flex: 1;
+}
+
+.toast__close {
+    color: var(--surface);
+    text-decoration: none;
+    font-size: 1.4rem;
+    line-height: 1;
+    padding: 0.1rem 0.4rem;
+    border-radius: 6px;
+    opacity: 0.8;
+}
+
+.toast__close:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.12);
+}
