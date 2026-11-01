@@ -242,7 +242,7 @@ deployment-time controls and hardening. See the chat/PR notes for full findings.
 | --- | --- |
 | 502 Bad Gateway | `systemctl status msfsgtfs`; is gunicorn bound to `127.0.0.1:8000`? `journalctl -u msfsgtfs -n 50` |
 | Schedule looks stale / wrong day | Did you run `build_feed.py` **and** restart the service after editing `msfs_gtfs_package/`? |
-| `FileNotFoundError: Archive.zip` | `Archive.zip` wasn't built on the server — run `python build_feed.py` from the repo root |
+| Worker crashes with `requests.exceptions.MissingSchema: ... '.../Archive.zip': No scheme supplied` (causes 502) | `Archive.zip` wasn't built on the server. `gtfs_kit` mistakes the missing path for a URL. Run `python3 build_feed.py` from the repo root, ensure it's readable by the service user, and restart. |
 | Debug bar / `?now=` visible in prod | `MSFSGTFS_ENV` is not `production` — fix the systemd `Environment=` line and restart |
 | Static files 404 | nginx `alias` path must point at `/opt/msfsgtfs/backend/static/` (trailing slash matters) |
 | Import/build errors on `pip install` | geospatial deps (geopandas/pyproj/shapely) — install system GEOS/PROJ/GDAL (step 1 note) |
