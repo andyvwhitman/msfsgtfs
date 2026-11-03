@@ -38,6 +38,16 @@ def inject_globals():
         'notice': _active_notice(),
     }
 
+@app.template_global()
+def static_url(filename):
+    """Return a /static/ URL with the file's mtime as a cache-busting version.
+
+    nginx caches /static/ for 7 days in production, so a changed file needs a
+    new URL (e.g. style.css?v=1762099200) for browsers to fetch it again.
+    """
+    mtime = int((Path(app.static_folder) / filename).stat().st_mtime)
+    return f"/static/{filename}?v={mtime}"
+
 class Route():
     """A single GTFS route and the trips that run on it."""
 
