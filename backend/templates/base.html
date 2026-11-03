@@ -1,4 +1,5 @@
 {# Base layout: <head>, site nav, and the content block every page extends. #}
+{% from "_macros.html" import offisland_line %}
 <!doctype html>
 <html lang="en">
 <head>
@@ -62,6 +63,54 @@
                 <li>Tap <strong>Add</strong> to confirm.</li>
             </ol>
             <button type="button" class="modal__close" data-close>Got it</button>
+        </div>
+    </div>
+
+    {# Time on/off island explainer. Opens once automatically on a schedule page
+       (remembered in a cookie), and again from any line's label or the footer
+       link. The demo grid is a live [data-offisland] grid, so it can be tapped. #}
+    <div id="offisland-help" class="modal" hidden>
+        <div class="modal__backdrop" data-close></div>
+        <div class="modal__card modal__card--full" role="dialog" aria-modal="true" aria-labelledby="offisland-help-title">
+            <h3 id="offisland-help-title">Time on &amp; off island</h3>
+            <p class="modal__sub">Pick the boat you're taking and the boat you're coming back on, and we'll show how long you have.</p>
+
+            <div class="help-demo">
+                <div class="schedule-grid" data-offisland="help-demo">
+                    <div class="schedule-col">
+                        <h3>{{ config.STOP_A_NAME }}</h3>
+                        <div class="trip future" data-port="a" data-dep="06:45:00" data-arr="07:15:00">6:45 AM</div>
+                        <div class="trip future" data-port="a" data-dep="09:45:00" data-arr="10:15:00">9:45 AM</div>
+                        <div class="trip future" data-port="a" data-dep="14:15:00" data-arr="14:45:00">2:15 PM</div>
+                    </div>
+                    {{ offisland_line() }}
+                    <div class="schedule-col">
+                        <h3>{{ config.STOP_B_NAME }}</h3>
+                        <div class="trip future" data-port="b" data-dep="07:30:00" data-arr="08:00:00">7:30 AM</div>
+                        <div class="trip future" data-port="b" data-dep="11:00:00" data-arr="11:30:00">11:00 AM</div>
+                        <div class="trip future" data-port="b" data-dep="16:30:00" data-arr="17:00:00">4:30 PM</div>
+                    </div>
+                </div>
+                <p class="help-demo__hint">Try it: tap a time in each column.</p>
+            </div>
+
+            <dl class="help-list">
+                <dt><span class="help-swatch help-swatch--off"></span>Off island</dt>
+                <dd>Leave {{ config.STOP_A_NAME }} first. Time from arriving in {{ config.STOP_B_NAME }} until your boat home.</dd>
+                <dt><span class="help-swatch help-swatch--on"></span>On island</dt>
+                <dd>Leave {{ config.STOP_B_NAME }} first. Time from arriving on {{ config.STOP_A_NAME }} until your boat back.</dd>
+                <dt>15 minutes to board</dt>
+                <dd>You need to be at the terminal 15 minutes early, so that's already taken off.</dd>
+                <dt>How much time?</dt>
+                <dd>
+                    <span class="help-tier offisland--short"><span class="offisland__time">red</span></span> under 1:30 &middot;
+                    <span class="help-tier offisland--medium"><span class="offisland__time">orange</span></span> under 4:00 &middot;
+                    <span class="help-tier offisland--long"><span class="offisland__time">green</span></span> 4:00 or more
+                    <br>A dash (&mdash;) means the return boat leaves too soon to make.
+                </dd>
+            </dl>
+
+            <button type="button" class="maps-choice" data-close>Got it</button>
         </div>
     </div>
 
@@ -243,10 +292,35 @@
             });
             document.addEventListener('htmx:afterSwap', renderAll);
             window.addEventListener('resize', renderAll);  // layout reflows (e.g. weekly stacks on phones)
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', renderAll);
-            } else {
+
+            // Explainer popup: opens from any line's label or the footer link,
+            // and once automatically on the first visit to a page with a schedule.
+            var help = document.getElementById('offisland-help');
+            function openHelp() {
+                help.hidden = false;
+                renderAll();  // the demo grid can only be measured once visible
+                document.cookie = 'offisland_help_seen=1; max-age=31536000; path=/; samesite=Lax';
+            }
+            function maybeOpenHelp() {
+                var seen = /(?:^|;\s*)offisland_help_seen=1/.test(document.cookie);
+                var hasSchedule = document.querySelector('.has-offisland:not([data-offisland="help-demo"])');
+                if (!seen && hasSchedule) { openHelp(); }
+            }
+            document.addEventListener('click', function (e) {
+                if (e.target.closest('.offisland__label, [data-offisland-help]')) {
+                    e.preventDefault();
+                    openHelp();
+                }
+            });
+
+            function init() {
                 renderAll();
+                maybeOpenHelp();
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
             }
         })();
     })();
@@ -268,6 +342,7 @@
             <a href="/prefs/map-provider?provider=google" data-provider="google"
                {% if map_provider == 'google' %}class="active"{% endif %}>Google Maps</a>
         </div>
+        <div class="help-link"><a href="#" data-offisland-help>How time on/off island works</a></div>
         <div class="a2hs" hidden><a href="#" id="a2hs-link">Add to Home Screen</a></div>
         <p class="disclaimer">
             Not affiliated with or endorsed by the Maine State Ferry Service.
