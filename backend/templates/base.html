@@ -157,6 +157,98 @@
         } else {
             initAddToHomeScreen();
         }
+
+        // Time on/off island: in each [data-offisland] grid, pick one Swan's
+        // Island trip (data-port="a") and one Bass Harbor trip ("b"). Whichever
+        // leaves first decides the mode: SI first = time off island (arrive BH ->
+        // return boat leaves BH); BH first = time on island (arrive SI -> boat
+        // back leaves SI). Both subtract the 15 minutes you need at the terminal
+        // before boarding. Defaults to the first SI trip and last BH trip.
+        (function () {
+            var BOARDING_SECONDS = 15 * 60;
+            var picks = {};  // grid key -> {a, b} departure times; survives HTMX refreshes
+
+            function seconds(t) {
+                var p = t.split(':').map(Number);
+                return p[0] * 3600 + p[1] * 60 + (p[2] || 0);
+            }
+            function formatDuration(s) {
+                var mins = Math.round(s / 60);
+                return Math.floor(mins / 60) + ':' + String(mins % 60).padStart(2, '0');
+            }
+            function findTrip(cells, dep) {
+                return cells.filter(function (c) { return c.dataset.dep === dep; })[0];
+            }
+            // Vertical centre of a cell, relative to the top of the middle column.
+            function centreY(cell, column) {
+                var r = cell.getBoundingClientRect();
+                return r.top + r.height / 2 - column.getBoundingClientRect().top;
+            }
+
+            function render(grid) {
+                var aCells = Array.from(grid.querySelectorAll('[data-port="a"]'));
+                var bCells = Array.from(grid.querySelectorAll('[data-port="b"]'));
+                grid.classList.toggle('has-offisland', aCells.length > 0 && bCells.length > 0);
+                if (!aCells.length || !bCells.length) { return; }
+
+                var key = grid.dataset.offisland;
+                var pick = picks[key] || {};
+                var a = findTrip(aCells, pick.a) || aCells[0];
+                var b = findTrip(bCells, pick.b) || bCells[bCells.length - 1];
+                picks[key] = {a: a.dataset.dep, b: b.dataset.dep};
+                aCells.concat(bCells).forEach(function (c) {
+                    c.classList.toggle('picked', c === a || c === b);
+                });
+
+                var offIsland = seconds(a.dataset.dep) < seconds(b.dataset.dep);
+                var first = offIsland ? a : b;
+                var second = offIsland ? b : a;
+                var available = seconds(second.dataset.dep) - seconds(first.dataset.arr) - BOARDING_SECONDS;
+
+                grid.classList.toggle('offisland--off', offIsland);
+                grid.classList.toggle('offisland--on', !offIsland);
+                grid.classList.toggle('offisland--invalid', available < 0);
+                // Off-island time is colour-coded by how long you get ashore.
+                var hours = available / 3600;
+                var valid = offIsland && available >= 0;
+                grid.classList.toggle('offisland--short', valid && hours < 1.5);
+                grid.classList.toggle('offisland--medium', valid && hours >= 1.5 && hours < 4);
+                grid.classList.toggle('offisland--long', valid && hours >= 4);
+                grid.querySelector('.offisland__time').textContent =
+                    available < 0 ? '—' : formatDuration(available);
+                grid.querySelector('.offisland__mode').textContent =
+                    offIsland ? 'off island' : 'on island';
+
+                // Stretch the line between the two picked trips; label at its midpoint.
+                var column = grid.querySelector('.offisland');
+                var yA = centreY(a, column);
+                var yB = centreY(b, column);
+                var line = grid.querySelector('.offisland__line');
+                line.style.top = Math.min(yA, yB) + 'px';
+                line.style.height = Math.abs(yA - yB) + 'px';
+                grid.querySelector('.offisland__label').style.top = (yA + yB) / 2 + 'px';
+            }
+            function renderAll() {
+                document.querySelectorAll('[data-offisland]').forEach(render);
+            }
+
+            document.addEventListener('click', function (e) {
+                var cell = e.target.closest('[data-port]');
+                var grid = cell && cell.closest('[data-offisland]');
+                if (!grid) { return; }
+                var pick = picks[grid.dataset.offisland] || {};
+                pick[cell.dataset.port] = cell.dataset.dep;
+                picks[grid.dataset.offisland] = pick;
+                render(grid);
+            });
+            document.addEventListener('htmx:afterSwap', renderAll);
+            window.addEventListener('resize', renderAll);  // layout reflows (e.g. weekly stacks on phones)
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', renderAll);
+            } else {
+                renderAll();
+            }
+        })();
     })();
     </script>
 

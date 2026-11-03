@@ -17,7 +17,7 @@
             <div class="day-col">
                 <h2>{{ day.weekday }}<span class="day-date">{{ day.date_display }}</span></h2>
                 {% if day.trips %}
-                    {{ day_block(day.trips, stop_a_abbr, stop_b_abbr) }}
+                    {{ day_block(day.trips, stop_a_abbr, stop_b_abbr, day.date) }}
                 {% else %}
                     <p class="no-more">No service</p>
                 {% endif %}

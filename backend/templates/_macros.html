@@ -1,22 +1,39 @@
 {# Reusable two-port departure grid: one column per port, time-ordered.
-   direction_id 1 departs port A (Swan's Island); 0 departs port B (Bass Harbor). #}
-{% macro day_block(trips, a_abbr, b_abbr) %}
-<div class="port-grid">
+   direction_id 1 departs port A (Swan's Island); 0 departs port B (Bass Harbor).
+   The middle column is the on/off-island line (see offisland in base.html);
+   key identifies the grid so a tapped selection survives re-renders. #}
+{% macro day_block(trips, a_abbr, b_abbr, key) %}
+<div class="port-grid" data-offisland="{{ key }}">
     <div class="port-head">{{ a_abbr }}</div>
+    <div></div>
     <div class="port-head">{{ b_abbr }}</div>
     <div class="port-col">
         {% for trip in trips if trip.direction_id == 1 %}
-            <div class="trip future">{{ trip.display_time }}</div>
+            <div class="trip future" data-port="a" data-dep="{{ trip.departure_time }}" data-arr="{{ trip.arrival_time }}">{{ trip.display_time }}</div>
         {% else %}
             <div class="trip empty">&mdash;</div>
         {% endfor %}
     </div>
+    {{ offisland_line() }}
     <div class="port-col">
         {% for trip in trips if trip.direction_id == 0 %}
-            <div class="trip future">{{ trip.display_time }}</div>
+            <div class="trip future" data-port="b" data-dep="{{ trip.departure_time }}" data-arr="{{ trip.arrival_time }}">{{ trip.display_time }}</div>
         {% else %}
             <div class="trip empty">&mdash;</div>
         {% endfor %}
+    </div>
+</div>
+{% endmacro %}
+
+{# Middle column between the port columns: a line spanning the two picked trips,
+   broken at its midpoint by the time and an on/off-island label. JS positions
+   the line and fills in the label. #}
+{% macro offisland_line() %}
+<div class="offisland">
+    <div class="offisland__line"></div>
+    <div class="offisland__label" aria-live="polite">
+        <span class="offisland__time"></span>
+        <span class="offisland__mode"></span>
     </div>
 </div>
 {% endmacro %}

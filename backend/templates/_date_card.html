@@ -1,21 +1,23 @@
 {# Plain schedule card for one date: two port columns, no live status classes.
    Rendered standalone for the HTMX date-picker target. #}
+{% from "_macros.html" import offisland_line %}
 <div class="full-schedule date-card">
     <h2>{{ date_display }}</h2>
     {% if has_service %}
-    <div class="schedule-grid">
+    <div class="schedule-grid" data-offisland="{{ date_display }}">
         <div class="schedule-col">
             <h3>{{ stop_a_name }}</h3>
             {% for trip in stop_a_trips %}
-                <div class="trip future">{{ trip.display_time }}</div>
+                <div class="trip future" data-port="a" data-dep="{{ trip.departure_time }}" data-arr="{{ trip.arrival_time }}">{{ trip.display_time }}</div>
             {% else %}
                 <div class="trip empty">&mdash;</div>
             {% endfor %}
         </div>
+        {{ offisland_line() }}
         <div class="schedule-col">
             <h3>{{ stop_b_name }}</h3>
             {% for trip in stop_b_trips %}
-                <div class="trip future">{{ trip.display_time }}</div>
+                <div class="trip future" data-port="b" data-dep="{{ trip.departure_time }}" data-arr="{{ trip.arrival_time }}">{{ trip.display_time }}</div>
             {% else %}
                 <div class="trip empty">&mdash;</div>
             {% endfor %}

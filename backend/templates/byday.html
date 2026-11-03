@@ -15,7 +15,7 @@
     <section class="day-card">
         <h2>{{ day.label }}</h2>
         {% if day.trips %}
-            {{ day_block(day.trips, stop_a_abbr, stop_b_abbr) }}
+            {{ day_block(day.trips, stop_a_abbr, stop_b_abbr, day.label) }}
         {% else %}
             <p class="no-more">No service</p>
         {% endif %}

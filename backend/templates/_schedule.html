@@ -1,5 +1,6 @@
 {# Live schedule fragment: next departure, in-progress voyage, today's trips.
    Self-refreshes every 60s via HTMX; also served standalone at /schedule/fragment. #}
+{% from "_macros.html" import offisland_line %}
 <div id="schedule-live"
      hx-get="/schedule/fragment{{ now_qs }}"
      hx-trigger="every 60s"
@@ -86,17 +87,18 @@
 
     <section class="full-schedule">
         <h2>Today's Schedule</h2>
-        <div class="schedule-grid">
+        <div class="schedule-grid" data-offisland="{{ today }}">
             <div class="schedule-col">
                 <h3 class="station-name">{{ stop_a_name }}</h3>
                 {% for trip in stop_a_trips %}
-                    <div class="trip {{ trip.status }}{% if trip.is_next %} next{% endif %}">{{ trip.display_time }}{% if trip.countdown %} <span class="trip-countdown">({{ trip.countdown }})</span>{% endif %}</div>
+                    <div class="trip {{ trip.status }}{% if trip.is_next %} next{% endif %}" data-port="a" data-dep="{{ trip.departure_time }}" data-arr="{{ trip.arrival_time }}">{{ trip.display_time }}{% if trip.countdown %} <span class="trip-countdown">({{ trip.countdown }})</span>{% endif %}</div>
                 {% endfor %}
             </div>
+            {{ offisland_line() }}
             <div class="schedule-col">
                 <h3 class="station-name">{{ stop_b_name }}</h3>
                 {% for trip in stop_b_trips %}
-                    <div class="trip {{ trip.status }}{% if trip.is_next %} next{% endif %}">{{ trip.display_time }}{% if trip.countdown %} <span class="trip-countdown">({{ trip.countdown }})</span>{% endif %}</div>
+                    <div class="trip {{ trip.status }}{% if trip.is_next %} next{% endif %}" data-port="b" data-dep="{{ trip.departure_time }}" data-arr="{{ trip.arrival_time }}">{{ trip.display_time }}{% if trip.countdown %} <span class="trip-countdown">({{ trip.countdown }})</span>{% endif %}</div>
                 {% endfor %}
             </div>
         </div>

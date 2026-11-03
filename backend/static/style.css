@@ -13,6 +13,13 @@
     --next: #2e8b57;      /* sea green — the next departure */
     --live: #3a8fa0;      /* steel-teal — in-progress trips + progress bar */
     --border: #d8e6e6;    /* hairlines, dividers, empty marks */
+    --off: #2a7d8c;       /* time off island — teal, the water side */
+    --off-tint: rgba(42, 125, 140, 0.14);
+    --on: #9a6416;        /* time on island — sand, the land side */
+    --on-tint: rgba(154, 100, 22, 0.14);
+    --time-short: #c0392b;   /* off island < 1.5h — red */
+    --time-medium: #b35c00;  /* off island < 4h — orange */
+    --time-long: #2e7d32;    /* off island >= 4h — green */
     --shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
@@ -37,7 +44,7 @@ body {
 }
 
 #container.wide {
-    max-width: 1280px;
+    max-width: 1440px;
 }
 
 /* Nav */
@@ -76,9 +83,9 @@ body {
 
 .week-grid {
     display: grid;
-    grid-template-columns: repeat(7, minmax(150px, 1fr));
+    grid-template-columns: repeat(7, minmax(190px, 1fr));
     gap: 0.75rem;
-    min-width: 1080px;
+    min-width: 1402px;
 }
 
 .day-col {
@@ -105,7 +112,7 @@ body {
 
 .port-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr auto 1fr;
     gap: 0.25rem 0.5rem;
 }
 
@@ -261,7 +268,7 @@ header h1 {
 
 .schedule-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr auto 1fr;
     gap: 1rem;
 }
 
@@ -756,4 +763,105 @@ header h1 {
 .toast__close:hover {
     opacity: 1;
     background: rgba(255, 255, 255, 0.12);
+}
+
+/* Time on/off island — a line in the middle column spanning the two picked
+   trips, broken at its midpoint by the time and an "off island" / "on island"
+   label. Teal (water) = off island; sand (land) = on island. JS sets the line's
+   top/height and the label's top. */
+.offisland {
+    display: none;
+    position: relative;
+    width: 3rem;
+    --mode: var(--off);
+}
+
+.has-offisland .offisland {
+    display: block;
+}
+
+.offisland--on .offisland {
+    --mode: var(--on);
+}
+
+.offisland__line {
+    position: absolute;
+    left: 50%;
+    width: 2px;
+    margin-left: -1px;
+    background: var(--mode);
+    opacity: 0.5;
+    border-radius: 1px;
+}
+
+.offisland__label {
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    padding: 0.25rem 0;
+    background: var(--surface);   /* breaks the line behind it */
+    color: var(--mode);
+    text-align: center;
+    line-height: 1.1;
+}
+
+.offisland__time {
+    font-size: 0.85rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.offisland__mode {
+    margin-top: 0.15rem;
+    font-size: 0.56rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.offisland--invalid .offisland__time {
+    color: var(--faint);
+}
+
+/* Off-island time digits: red < 1.5h, orange < 4h, green >= 4h. */
+.offisland--short .offisland__time {
+    color: var(--time-short);
+}
+
+.offisland--medium .offisland__time {
+    color: var(--time-medium);
+}
+
+.offisland--long .offisland__time {
+    color: var(--time-long);
+}
+
+.has-offisland [data-port] {
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+/* Room for the picked tint without shifting the left-aligned home/date times. */
+.has-offisland .schedule-col .trip {
+    margin: 0 -0.4rem;
+    padding-left: 0.4rem;
+    padding-right: 0.4rem;
+}
+
+.trip.picked {
+    background: var(--off-tint);
+    font-weight: 600;
+}
+
+.offisland--on .trip.picked {
+    background: var(--on-tint);
+}
+
+/* Keep a picked trip readable even when it's already departed. */
+.trip.past.picked {
+    opacity: 0.7;
 }
