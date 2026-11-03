@@ -455,6 +455,8 @@ def _build_schedule_context():
 
     route = Route(feed, route_id)
     trips = [t.get_trip_summary() for t in route.get_trips_on_date(now_dt.strftime('%Y%m%d'))]
+    # Feed order isn't time order (e.g. the 3rd-Tuesday gas-trip service is listed last).
+    trips.sort(key=lambda t: _gtfs_seconds(t['departure_time']))
 
     stop_a_trips, stop_b_trips = [], []
     for trip in trips:
